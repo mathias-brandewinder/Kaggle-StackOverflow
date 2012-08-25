@@ -1,7 +1,7 @@
-﻿// This file is a script that can be executed with the F# Interactive.  
-// It can be used to explore and test the library project.
-// Note that script files will not be part of the project build.
+﻿#r "Microsoft.VisualBasic"
+open Microsoft.VisualBasic.FileIO
+#load "Data.fs"
+open Charon.Data
 
-#load "Module1.fs"
-open Module1
-
+let questionsFile = @"Z:\Data\StackOverflow\train-sample\train-sample.csv"
+let parsed = parseQuestions questionsFile
