@@ -4,7 +4,7 @@ module Data =
 
     open Microsoft.VisualBasic.FileIO
 
-    let parseQuestions (filePath: string) =
+    let parseCsv (filePath: string) =
 
         let reader = new TextFieldParser(filePath)
         reader.TextFieldType <- FieldType.Delimited
@@ -15,5 +15,4 @@ module Data =
             then 
                 reader.Close()
                 None
-            else Some(line, reader.ReadFields())) (reader.ReadFields())
-
+            else Some(line, reader.ReadFields())) (reader.ReadFields())        
