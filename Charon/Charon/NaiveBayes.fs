@@ -28,7 +28,7 @@ module NaiveBayes =
     // Extracts all words used in a dataset;
     // a Dataset is a sequence of "samples", 
     // each sample has a label (the class), and text.
-    let extractWords dataset =
+    let extractWords (dataset: (string * string) seq) =
         dataset 
         |> Seq.map (fun sample -> vocabulary (snd sample))
         |> Seq.concat
@@ -36,7 +36,7 @@ module NaiveBayes =
 
     // "Tokenize" the dataset: break each text sample
     // into words and how many times they are used.
-    let prepare dataset =
+    let prepare (dataset: (string * string) seq) =
         dataset
         |> Seq.map (fun (label, sample) -> (label, wordsCount sample))
 
@@ -45,7 +45,7 @@ module NaiveBayes =
     // sample the tokenized text.
     // setFold increases the count by 1 if the word is 
     // present in the sample.
-    let setFold state sample =
+    let setFold (state: Map<string, int>) sample =
         state
         |> Map.map (fun token count ->
             if sample |> Map.containsKey(token) 
@@ -57,7 +57,7 @@ module NaiveBayes =
     // sample the tokenized text.
     // setFold increases the count by the number of occurences
     // of the word in the sample.
-    let bagFold state sample =
+    let bagFold (state: Map<string, int>) sample =
         state
         |> Map.map (fun token count -> 
             if sample |> Map.containsKey(token)
@@ -67,7 +67,7 @@ module NaiveBayes =
     // Aggregate words frequency across the dataset,
     // using the provided folder.
     // (Supports setFold and bagFold)
-    let frequency folder dataset words =
+    let frequency folder (dataset: (string * Map<string, int>) seq) (words: string seq) =
         let init = 
             words 
             |> Seq.map (fun w -> (w, 1))
@@ -84,8 +84,15 @@ module NaiveBayes =
         dataset
         |> prepare
         |> Seq.fold (fun state (label, sample) -> bagFold state sample) init
-        |> Seq.sortBy (fun kv -> - kv.Value )
+        |> Seq.sortBy (fun kv -> - (kv.Value) )
         |> Seq.map (fun kv -> kv.Key)
+
+    let topByClass dataset top =
+        dataset
+        |> Seq.groupBy fst
+        |> Seq.map (fun (cl, group) -> topWords group |> Seq.take top)
+        |> Seq.concat
+        |> Set.ofSeq
 
     // Convenience functions for training the classifier
     // using set-of-Words and bag-of-Words frequency.
@@ -113,19 +120,9 @@ module NaiveBayes =
             label, 
             prop(total, size), 
             Map.map (fun token count -> prop(count, totTokens)) tokenCount)
+        |> Seq.toList
 
-    // Classifier function:
-    // the classifier is trained on the dataset,
-    // using the words and frequency folder supplied.
-    // A piece of text is classified by computing
-    // the "likelihood" it belongs to each possible label,
-    // by checking the presence and weight of each
-    // "classification word" in the tokenized text,
-    // and returning the highest scoring label.
-    // Probabilities are log-transformed to avoid underflow.
-    // See "Chapter4.fsx" for an illustration.
-    let classifier frequency dataset words text =
-        let estimator = train frequency dataset words
+    let classify estimator text =
         let tokenized = vocabulary text
         estimator
         |> Seq.map (fun (label, proba, tokens) ->
