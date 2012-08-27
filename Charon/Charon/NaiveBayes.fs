@@ -24,7 +24,6 @@ module NaiveBayes =
         |> Seq.cast<Match>
         |> Seq.map (fun m -> m.Value.ToLower())
         |> Set.ofSeq
-
         
     // Extracts all words used in a dataset;
     // a Dataset is a sequence of "samples", 
@@ -86,6 +85,7 @@ module NaiveBayes =
         |> prepare
         |> Seq.fold (fun state (label, sample) -> bagFold state sample) init
         |> Seq.sortBy (fun kv -> - kv.Value )
+        |> Seq.map (fun kv -> kv.Key)
 
     // Convenience functions for training the classifier
     // using set-of-Words and bag-of-Words frequency.
@@ -135,5 +135,4 @@ module NaiveBayes =
                 if Set.contains(token) tokenized 
                 then p + log(value) 
                 else p) (log proba))
-        |> Seq.maxBy snd
-        |> fst
+        |> Seq.toList
