@@ -1,14 +1,20 @@
 ﻿#r "Microsoft.VisualBasic"
-open Microsoft.VisualBasic.FileIO
 #load "Data.fs"
 #load "NaiveBayes.fs"
+System.IO.Directory.SetCurrentDirectory(__SOURCE_DIRECTORY__)
+
 open Charon.Data
 open MachineLearning.NaiveBayes
+open Microsoft.VisualBasic.FileIO
 
 #time
-//let trainSet =  @"Z:\Data\StackOverflow\train\train.csv"
-let trainSampleSet = @"Z:\Data\StackOverflow\train-sample\train-sample.csv"
-let benchmarkSet = @"Z:\Data\StackOverflow\public_leaderboard.csv"
+
+let trainSampleSet = @"..\..\..\train-sample.csv"
+let publicLeaderboard = @"..\..\..\public_leaderboard.csv"
+let benchmarkSet = @"..\..\..\basic_benchmark.csv"
+
+// split the data into train and test sets as 70/30
+let trainPct = 0.07
 
 // Basic function to reduce questions to open vs. close
 
@@ -17,36 +23,63 @@ let benchmarkSet = @"Z:\Data\StackOverflow\public_leaderboard.csv"
 //    | "open" -> "open"
 //    | _      -> "closed"
 
-// retrieve class and title of questions
-//let questionTitles =
-//    parseCsv trainSampleSet
-//    |> Seq.skip 1
-//    |> Seq.map (fun line -> line.[14], line.[6])
-//    |> Seq.toList
+// indices of the title and body columns
+let titleCol, bodyCol = 6, 7
 
-let questionBodies =
-    parseCsv trainSampleSet
+// retrieve OpenStatus and given column
+let getQuestionsData setFileName col =
+    parseCsv setFileName
     |> Seq.skip 1
-    |> Seq.map (fun line -> line.[14], line.[7])
+    |> Seq.map (fun line -> line.[14], line.[col])
     |> Seq.toList
 
-let sampleSize = 10000
-let sample = questionBodies |> Seq.take sampleSize
-let tokens = topByClass sample 500
+let getPublicData publicLeaderboard= 
+    parseCsv publicLeaderboard
+    |> Seq.skip 1
+    |> Seq.map (fun line -> line.[7])
+    |> Seq.toList
 
-let training = train setOfWords questionBodies tokens
-let test = classify training
+let inline size pct len = int(ceil(pct * float len))
 
-// Visualize classification results
+// split data into train and test sets
+let splitSets fileName trainPct col =
+    let questionsData = getQuestionsData fileName col
+    let sampleSize = size trainPct questionsData.Length
+    questionsData
+    |> Seq.fold (fun (i, (sample, test)) q -> 
+        if i <= sampleSize then i+1, (q::sample, test)
+        else i+1, (sample, q::test)) (1,([],[]))
+    |> snd
 
-//questionTitles
-//|> Seq.skip (sampleSize + 1)
-//|> Seq.take 20
-//|> Seq.iter (fun (c, t) -> 
-//    let result = test t
-//    printfn ""
-//    printfn "Real: %s" c
-//    result |> List.iter (fun (c, p) -> printfn "%s %f" c p))
+let trainSample trainSet =
+    let tokens = topByClass trainSet 500
+    let training = train setOfWords trainSet tokens
+    classify training
+    //todo: return probabilities here
+
+let inline predict model = Seq.map model 
+
+// Compute metrics with probabilities by class vs real classes
+let computeMetrics preds ys = 
+    Seq.zip preds ys
+    |> Seq.map (fun (cls, yi) -> Seq.sumBy (fun (cl, pi) -> (if yi = cl then 1. else 0.) * log pi) cls)
+    |> Seq.average |> (*)-1.
+
+// Visualize classification results by group
+let visualizeByGroup test testSet =
+    testSet
+    |> Seq.map (fun (c, t) -> 
+        let result = test t |> Seq.maxBy snd |> fst
+        c, result)
+    |> Seq.groupBy fst
+    |> Seq.map (fun (cl, gr) ->
+        let grouped = gr |> Seq.groupBy snd
+        cl,
+        grouped |> Seq.map (fun (res, cases) -> res, Seq.length cases))
+    |> Seq.iter (fun (cl, results) -> 
+        printfn ""
+        printfn "Real: %s" cl
+        results |> Seq.iter (fun (g, c) -> printfn "%s, %i" g c))
 
 // Evaluate % correctly classified
 
@@ -61,20 +94,22 @@ let test = classify training
 //|> Seq.map (fun (cl, gr) -> cl, gr |> Seq.averageBy snd)
 //|> Seq.iter (fun (cl, prob) -> printfn "%s %f" cl prob)
 
-// Visualize classification results by group
-questionBodies
-|> Seq.skip (sampleSize + 1)
-|> Seq.take 10000
-|> Seq.map (fun (c, t) -> 
-    let result = 
-        test t |> Seq.maxBy snd |> fst
-    c, result)
-|> Seq.groupBy fst
-|> Seq.map (fun (cl, gr) -> 
-    let grouped = gr |> Seq.groupBy snd
-    cl,
-    grouped |> Seq.map (fun (res, cases) -> res, Seq.length cases))
-|> Seq.iter (fun (cl, results) -> 
-    printfn ""
-    printfn "Real: %s" cl
-    results |> Seq.iter (fun (g, c) -> printfn "%s, %i" g c))
+let trainSet, testSet = splitSets trainSampleSet trainPct bodyCol
+let test = trainSample trainSet
+let predictions = predict test (Seq.map snd testSet)
+
+visualizeByGroup test testSet
+computeMetrics predictions (Seq.map fst testSet)
+
+// metrics example
+let ys = [1;1;1;2;2;2]
+let preds = [
+    [1, 0.5; 2, 0.5]
+    [1, 0.1; 2, 0.9]
+    [1, 0.01;2, 0.99]
+    [1, 0.9; 2, 0.1]
+    [1, 0.75; 2, 0.25]
+    [1, 0.001; 2, 0.999]
+    [1, 1.; 2, 0.]
+]
+computeMetrics preds ys
