@@ -1,20 +1,25 @@
 ﻿#r "Microsoft.VisualBasic"
 #load "Data.fs"
+#load "Validation.fs"
 #load "NaiveBayes.fs"
 System.IO.Directory.SetCurrentDirectory(__SOURCE_DIRECTORY__)
 
 open Charon.Data
+open Charon.Validation
 open MachineLearning.NaiveBayes
 open Microsoft.VisualBasic.FileIO
 
 #time
 
-let trainSampleSet = @"..\..\..\train-sample.csv"
-let publicLeaderboard = @"..\..\..\public_leaderboard.csv"
-let benchmarkSet = @"..\..\..\basic_benchmark.csv"
+let trainSampleSet = @"Z:\Data\StackOverflow\train-sample\train-sample.csv"
+let publicLeaderboard = @"Z:\Data\StackOverflow\public_leaderboard.csv"
+
+//let trainSampleSet = @"..\..\..\train-sample.csv"
+//let publicLeaderboard = @"..\..\..\public_leaderboard.csv"
+//let benchmarkSet = @"..\..\..\basic_benchmark.csv"
 
 // split the data into train and test sets as 70/30
-let trainPct = 0.07
+let trainPct = 0.05
 
 // Basic function to reduce questions to open vs. close
 
@@ -59,12 +64,6 @@ let trainSample trainSet =
 
 let inline predict model = Seq.map model 
 
-// Compute metrics with probabilities by class vs real classes
-let computeMetrics preds ys = 
-    Seq.zip preds ys
-    |> Seq.map (fun (cls, yi) -> Seq.sumBy (fun (cl, pi) -> (if yi = cl then 1. else 0.) * log pi) cls)
-    |> Seq.average |> (*)-1.
-
 // Visualize classification results by group
 let visualizeByGroup test testSet =
     testSet
@@ -99,7 +98,7 @@ let test = trainSample trainSet
 let predictions = predict test (Seq.map snd testSet)
 
 visualizeByGroup test testSet
-computeMetrics predictions (Seq.map fst testSet)
+quality predictions (Seq.map fst testSet)
 
 // metrics example
 let ys = [1;1;1;2;2;2]
@@ -112,4 +111,5 @@ let preds = [
     [1, 0.001; 2, 0.999]
     [1, 1.; 2, 0.]
 ]
-computeMetrics preds ys
+
+quality preds ys

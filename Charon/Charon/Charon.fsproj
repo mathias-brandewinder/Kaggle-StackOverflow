@@ -41,6 +41,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Data.fs" />
+    <Compile Include="Validation.fs" />
     <Compile Include="NaiveBayes.fs" />
     <None Include="Script.fsx" />
   </ItemGroup>

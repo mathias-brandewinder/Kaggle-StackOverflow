@@ -15,4 +15,4 @@ module Data =
             then 
                 reader.Close()
                 None
-            else Some(line, reader.ReadFields())) (reader.ReadFields())        
+            else Some(line, reader.ReadFields())) (reader.ReadFields())
