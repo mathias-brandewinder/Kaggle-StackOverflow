@@ -23,3 +23,11 @@ type ``Validation Tests`` () =
         let expected = List.average [- log 0.5; - log 0.1]
         (quality predicted real) |> should equal expected
 
+    [<Test>] 
+    member test.``Quality should match correct prediction.`` ()=
+        let real = [1; 2]
+        let predicted = [ 
+            [1, 0.5; 2, 0.5]
+            [1, 0.1; 2, 0.9] ]
+        let expected = List.average [- log 0.5; - log 0.9]
+        (quality predicted real) |> should equal expected

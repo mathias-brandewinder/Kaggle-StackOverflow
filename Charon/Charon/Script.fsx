@@ -99,4 +99,3 @@ let predictions = predict test (Seq.map snd testSet)
 
 visualizeByGroup test testSet
 quality predictions (Seq.map fst testSet)
-
