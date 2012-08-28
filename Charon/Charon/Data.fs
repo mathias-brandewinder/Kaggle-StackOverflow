@@ -16,3 +16,10 @@ module Data =
                 reader.Close()
                 None
             else Some(line, reader.ReadFields())) (reader.ReadFields())
+
+    let categories = [
+        "not a real question";
+        "not constructive";
+        "off topic";
+        "open";
+        "too localized" ]
