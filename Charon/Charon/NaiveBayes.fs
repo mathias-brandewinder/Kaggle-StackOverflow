@@ -122,6 +122,11 @@ module NaiveBayes =
             Map.map (fun token count -> prop(count, totTokens)) tokenCount)
         |> Seq.toList
 
+    // replace estimated priors with custom priors by category
+    let updatePriors estimators (priors: Map<string, float>) =
+        estimators 
+        |> Seq.map (fun (cat, proba, stuff) -> cat, priors.[cat], stuff)
+
     let classify estimator text =
         let tokenized = vocabulary text
         estimator
