@@ -100,16 +100,3 @@ let predictions = predict test (Seq.map snd testSet)
 visualizeByGroup test testSet
 quality predictions (Seq.map fst testSet)
 
-// metrics example
-let ys = [1;1;1;2;2;2]
-let preds = [
-    [1, 0.5; 2, 0.5]
-    [1, 0.1; 2, 0.9]
-    [1, 0.01;2, 0.99]
-    [1, 0.9; 2, 0.1]
-    [1, 0.75; 2, 0.25]
-    [1, 0.001; 2, 0.999]
-    [1, 1.; 2, 0.]
-]
-
-quality preds ys

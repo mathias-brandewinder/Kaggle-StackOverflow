@@ -5,6 +5,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Charon", "Charon\Charon.fsp
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Charon.Console", "Charon.Console\Charon.Console.fsproj", "{6176B641-7E2E-48F8-82B6-E7C905324F66}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Charon.Tests", "Charon.Tests\Charon.Tests.fsproj", "{3DBE1333-5008-4B7C-AB2C-0ABE9D196635}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,6 +37,16 @@ Global
 		{6176B641-7E2E-48F8-82B6-E7C905324F66}.Release|Mixed Platforms.Build.0 = Release|x86
 		{6176B641-7E2E-48F8-82B6-E7C905324F66}.Release|x86.ActiveCfg = Release|x86
 		{6176B641-7E2E-48F8-82B6-E7C905324F66}.Release|x86.Build.0 = Release|x86
+		{3DBE1333-5008-4B7C-AB2C-0ABE9D196635}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3DBE1333-5008-4B7C-AB2C-0ABE9D196635}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3DBE1333-5008-4B7C-AB2C-0ABE9D196635}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{3DBE1333-5008-4B7C-AB2C-0ABE9D196635}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{3DBE1333-5008-4B7C-AB2C-0ABE9D196635}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{3DBE1333-5008-4B7C-AB2C-0ABE9D196635}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3DBE1333-5008-4B7C-AB2C-0ABE9D196635}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3DBE1333-5008-4B7C-AB2C-0ABE9D196635}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{3DBE1333-5008-4B7C-AB2C-0ABE9D196635}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{3DBE1333-5008-4B7C-AB2C-0ABE9D196635}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
