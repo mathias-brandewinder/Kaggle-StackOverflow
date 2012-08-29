@@ -125,9 +125,21 @@ let visualizeByGroup test testSet =
 //|> Seq.map (fun (cl, gr) -> cl, gr |> Seq.averageBy snd)
 //|> Seq.iter (fun (cl, prob) -> printfn "%s %f" cl prob)
 
+printfn "Reading training set"
 let trainSet, testSet = splitSets trainSampleSet trainPct bodyCol
-let test = trainSample trainSet
+
+let model = trainSample trainSet
 let predictions = predict test (Seq.map snd testSet)
 
 visualizeByGroup test testSet
 quality predictions (Seq.map fst testSet)
+
+//printfn "Training"
+//let test =
+//    let tokens = topByClass trainSet 500
+//    train setOfWords trainSet tokens
+//
+//printfn "Saving"
+//saveWordsFrequencies @"C:\Users\Mathias\model\bayes.csv" test
+//printfn "Reading"
+//let back = readWordsFrequencies @"C:\Users\Mathias\model\bayes.csv";;
