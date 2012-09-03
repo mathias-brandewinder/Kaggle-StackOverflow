@@ -7,7 +7,7 @@ module Validation =
         Seq.zip predictions actuals
         |> Seq.map (fun (predicted, actual) -> 
             Seq.sumBy (fun (cl, proba) -> 
-                (if actual = cl then 1. else 0.) * log proba) predicted)
+                if actual = cl then log proba else 0.) predicted)
         |> Seq.average |> (*)-1.
 
 

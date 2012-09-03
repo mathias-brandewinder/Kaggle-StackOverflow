@@ -4,7 +4,8 @@ module Data =
 
     open System
     open System.IO
-    open Microsoft.VisualBasic.FileIO
+    open System.Text.RegularExpressions
+    open Microsoft.VisualBasic.FileIO    
 
     let parseCsv (filePath: string) =
 
@@ -53,3 +54,12 @@ module Data =
 
         File.AppendAllLines(filePath, convertToText)
             
+    let opts = RegexOptions.Compiled ||| RegexOptions.IgnoreCase
+
+    let codeRegex = Regex("((^|\\n)\s{4}\s*((?!\\n).)*)+|`[^`]+`", opts)
+    let httpAddrRegex = Regex("(http|https)://[^\s]*", opts)
+
+    let inline removeCode str = codeRegex.Replace(str, "")
+    let inline removeLinks str = httpAddrRegex.Replace(str, "httpaddress")
+    
+    let preprocess str = (removeCode >> removeLinks) str
