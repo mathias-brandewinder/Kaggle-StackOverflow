@@ -138,3 +138,15 @@ module NaiveBayes =
                 then p + log(value) 
                 else p) (log proba))
         |> Seq.toList
+
+    // Convert Naive Bayes to Distribution over categories
+    // based on each category likelihood
+    let convert result categories =
+        let exponential =
+            result
+            |> Seq.map (fun (cat, value) -> (cat, exp value))
+        let total = 
+            exponential |> Seq.sumBy snd
+        exponential
+        |> Seq.map (fun (key, value) -> (key, value / total))
+        |> Map.ofSeq
