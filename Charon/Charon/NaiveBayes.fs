@@ -141,7 +141,7 @@ module NaiveBayes =
 
     // Convert Naive Bayes to Distribution over categories
     // based on each category likelihood
-    let convert result categories =
+    let renormalize result =
         let exponential =
             result
             |> Seq.map (fun (cat, value) -> (cat, exp value))

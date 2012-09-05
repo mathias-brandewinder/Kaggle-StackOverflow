@@ -37,6 +37,7 @@
     <None Include="packages.config" />
     <Compile Include="DataTests.fs" />
     <Compile Include="ValidationTests.fs" />
+    <Compile Include="NaiveBayesTests.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FsUnit.NUnit">
