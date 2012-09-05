@@ -32,6 +32,15 @@ module Data =
         "open";
         "too localized" ]
 
+    // Prior probability of each category
+    let priors =
+        Map.empty
+           .Add("not a real question", 0.0091347705760047)
+           .Add("not constructive",    0.0046458596397953)
+           .Add("off topic",           0.00520096554605094)
+           .Add("open",                0.979191390785063)
+           .Add ("too localized",      0.00182701345308509)
+
     let readWordsFrequencies (filePath: string) =
         let data = parseCsv filePath |> Seq.toList
         categories 

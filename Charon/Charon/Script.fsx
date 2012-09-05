@@ -59,16 +59,11 @@ let splitSets fileName trainPct col =
 // dumb classifier, matches every category to prior proba of each class
 let priorClassifier category =
     match category with
-    | "not a real question" ->
-        [ ("not a real question", 0.0091347705760047); ("not constructive", 0.0046458596397953); ("off topic", 0.00520096554605094); ("open", 0.979191390785063); ("too localized", 0.00182701345308509) ]
-    | "not constructive" ->
-        [ ("not a real question", 0.0091347705760047); ("not constructive", 0.0046458596397953); ("off topic", 0.00520096554605094); ("open", 0.979191390785063); ("too localized", 0.00182701345308509) ]
-    | "off topic" ->
-        [ ("not a real question", 0.0091347705760047); ("not constructive", 0.0046458596397953); ("off topic", 0.00520096554605094); ("open", 0.979191390785063); ("too localized", 0.00182701345308509) ]
-    | "open" ->
-        [ ("not a real question", 0.0091347705760047); ("not constructive", 0.0046458596397953); ("off topic", 0.00520096554605094); ("open", 0.979191390785063); ("too localized", 0.00182701345308509) ]
-    | "too localized" ->
-        [ ("not a real question", 0.0091347705760047); ("not constructive", 0.0046458596397953); ("off topic", 0.00520096554605094); ("open", 0.979191390785063); ("too localized", 0.00182701345308509) ]
+    | "not a real question" -> priors
+    | "not constructive" -> priors
+    | "off topic" -> priors
+    | "open" -> priors
+    | "too localized" -> priors
     | _ -> failwith "Unrecognized category"
 
 // need to do some work on this to produce probabilities
