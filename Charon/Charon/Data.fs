@@ -1,5 +1,10 @@
 ﻿namespace Charon
 
+type Post = 
+    { Id: string; 
+      Title: string; 
+      Body: string }
+
 module Data =
 
     open System
@@ -63,3 +68,28 @@ module Data =
     let inline removeLinks str = httpAddrRegex.Replace(str, "httpaddress")
     
     let preprocess str = (removeCode >> removeLinks) str
+
+    let extractPost (line: string []) =
+        { Id    = line.[0];
+          Title = line.[6];
+          Body  = line.[7] }
+
+    let prepareResults (data: string [] seq)
+                       (model: Post -> Map<string, float>) 
+                       categories =
+         data
+         |> Seq.map (fun d -> extractPost d)
+         |> Seq.map (fun d -> d.Id, model(d))
+         |> Seq.map (fun (id, dist) -> 
+            id :: List.map (fun cat -> dist.[cat].ToString()) categories)
+         |> Seq.map (fun line -> String.Join(",", line))
+              
+    // create submission file
+    let create sourceFile 
+               resultFile 
+               (model: Post -> Map<string, float>) 
+               categories =
+
+        let data = parseCsv sourceFile
+        let contents = prepareResults data model categories
+        File.WriteAllLines(resultFile, contents)
