@@ -14,7 +14,8 @@ type Post =
       Tag2: string;
       Tag3: string;
       Tag4: string;
-      Tag5: string; }
+      Tag5: string; 
+      OwnerUserId: string; }
     member this.Tags = 
         [ this.Tag1; this.Tag2; this.Tag3; this.Tag4; this.Tag5 ]
         |> List.filter (fun t -> not (String.IsNullOrWhiteSpace(t)))
@@ -150,7 +151,8 @@ module Data =
           Tag2        = line.[tag2Col];
           Tag3        = line.[tag3Col];
           Tag4        = line.[tag4Col];
-          Tag5        = line.[tag5Col]; }
+          Tag5        = line.[tag5Col]; 
+          OwnerUserId = line.[2];}
 
     let prepareResults (data: string [] seq)
                        (model: Post -> Map<string, float>) 
@@ -171,3 +173,26 @@ module Data =
         let data = parseCsv sourceFile |> List.tail
         let contents = prepareResults data model categories
         File.WriteAllLines(resultFile, contents)
+
+    // stat by user
+    let inline freqByCategory s = 
+        let total = Seq.length s |> float
+        categories 
+        |> Seq.map (fun cat -> cat, Seq.sumBy (fun q -> if snd q = cat then 1. / total else 0.) s)
+        |> Map.ofSeq
+
+    let getQuestionsByUser (data: #seq<Post * _>) = 
+        data
+        |> Seq.map (fun p -> (fst p).OwnerUserId, snd p)
+        |> Seq.groupBy fst
+        |> Seq.map (fun (usr, cats) -> usr, freqByCategory cats)
+        |> Map.ofSeq 
+
+    let newUserPriors =
+        [ "not a real question", 0.
+          "not constructive",    0.
+          "off topic",           0.
+          "open",                1.
+          "too localized",       0. ]
+        |> Map.ofList
+ 

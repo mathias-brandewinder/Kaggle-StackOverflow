@@ -116,6 +116,13 @@ let undeletedModel = fun (post: Charon.Post) ->
     estimates |> Map.map (fun k v -> v / total)
 let priorModel = fun (post: Charon.Post) -> trainingPriors
 
+
+let qstat = getQuestionsByUser trainSet
+let qstatModel = fun (post: Charon.Post) -> 
+    match qstat.TryFind post.OwnerUserId with
+    | Some cats -> cats
+    | None -> newUserPriors 
+
 // search for good weights between models
 // typically working on small dataset first to get a sense of right params 
 let testSet = validateSet |> Seq.take 100
@@ -142,14 +149,11 @@ let comboModel = fun (post: Charon.Post) ->
                   (0.05, priorModel post) ]
 
 let inline probsToString (m: Map<_, float>) =
-    String.Join(",", categories |> Seq.map (fun c -> string m.[c]) |> Seq.toArray)
+    String.Join(",", categories |> Seq.map (fun c -> string m.[c]))
 
 // save probabilities to a file
 let saveProbs model dataset fileName =
-    let lines = 
-        dataset
-        |> Seq.map (fst >> model >> probsToString)
-        |> Seq.append [ String.Join(",", Array.ofList categories) ]
+    let lines = dataset |> Seq.map (fst >> model >> probsToString)
     System.IO.File.WriteAllLines(fileName, lines)
 
 // Create a file with outputs of all models ("meta")
@@ -273,3 +277,15 @@ for w in 0.2 .. 0.1 .. 0.6 do
                       (w * 0.05, priorModel post) ]
     printfn "%f original" w                 
     benchmark testModel smallSet
+
+
+// combo with questions stat
+let comboStatModel = fun (post: Charon.Post) ->
+    combineMany categories 
+                [ 0.2, bodyModel post
+                  0.45, titleModel post
+                  0.25, tagsModel post 
+                  0.05, qstatModel post
+                  0.05, priorModel post ]
+
+benchmark comboStatModel validateSet
