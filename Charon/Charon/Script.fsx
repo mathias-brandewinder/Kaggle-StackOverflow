@@ -44,11 +44,24 @@ let model = fun (post: Charon.Post) -> (classifier post.Body |> renormalize)
 
 benchmark model validateSet
 
+// experimenting: benchmarking linear combinations of prior + model
+// manual search for best weight
+let w = 0.5 
+let m = fun (post: Charon.Post) -> combine categories (w, (classifier post.Body |> renormalize)) (1.0-w, trainingPriors)
+benchmark m validateSet
+
 //// Create submission file
-//let leader = updatePriors modelData priors
-//let leaderClassifier = classify leader
+// on my dinky laptop, takes < 5 minutes
+let leader = updatePriors modelData priors
+let leaderClassifier = classify leader
+// Submission 0: raw model
 //let leaderboardModel = fun (post: Charon.Post) -> (leaderClassifier post.Body |> renormalize)
 //create publicLeaderboard @"..\..\..\submission00.csv" leaderboardModel categories
+// Submission 1: 50% model, 50% priors
+let weight = 0.5
+let leaderboardModel = fun (post: Charon.Post) -> 
+    combine categories (weight, (leaderClassifier post.Body |> renormalize)) (1.0-weight, priors)
+create publicLeaderboard @"..\..\..\submission01.csv" leaderboardModel categories
 
 
 //// need to do some work on this to produce probabilities
