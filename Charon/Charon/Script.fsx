@@ -16,143 +16,65 @@ let publicLeaderboard = @"..\..\..\public_leaderboard.csv"
 
 // split the data into train and test sets as 75/25
 let trainPct = 0.75
-
-// indices of the title and body columns
-let titleCol, bodyCol = 6, 7
-
-// retrieve OpenStatus and given column
-let getQuestionsData setFileName col =
-    parseCsv setFileName
-    |> Seq.skip 1
-    |> Seq.map (fun line -> line.[14], line.[col])
-    |> Seq.toList
-
-let getPublicData publicLeaderboard= 
-    parseCsv publicLeaderboard
-    |> Seq.skip 1
-    |> Seq.map (fun line -> line.[7])
-    |> Seq.toList
-
 let inline size pct len = int(ceil(pct * float len))
 
-// split data into train and test sets
-let splitSets fileName trainPct col =
-    let questionsData = getQuestionsData fileName col
-    let sampleSize = size trainPct questionsData.Length
-    questionsData
+let split dataset percentage =
+    let sampleSize = size percentage (Seq.length dataset)
+    dataset
     |> Seq.fold (fun (i, (sample, test)) q -> 
-        if i <= sampleSize then i+1, (q::sample, test)
-        else i+1, (sample, q::test)) (1,([],[]))
+        if i <= sampleSize 
+        then i + 1, (q::sample, test)
+        else i + 1, (sample, q::test)) (1,([],[]))
     |> snd
 
-// dumb classifier, matches every category to prior proba of each class
-let priorClassifier category =
-    match category with
-    | "not a real question" -> priors
-    | "not constructive" -> priors
-    | "off topic" -> priors
-    | "open" -> priors
-    | "too localized" -> priors
-    | _ -> failwith "Unrecognized category"
+let sample = 
+    parseCsv trainSampleSet
+    |> Seq.skip 1
+    |> Seq.map (fun line ->
+        extractPost line,
+        line.[14])
+    |> Seq.toList
+    
+let trainSet, validateSet = split sample trainPct
+    
+let modelData = readWordsFrequencies @"..\..\..\bayes.csv"
+let training = updatePriors modelData trainingPriors
+let classifier = classify training 
+let model = fun (post: Charon.Post) -> (classifier post.Body |> renormalize)
 
-// need to do some work on this to produce probabilities
-// based on Bayes classifier output. This is raw, based on
-// observed error using classifier
-let bodyClassifier category =
-    match category with
-    | "not a real question" ->
-        [ ("not a real question", 0.397); ("not constructive", 0.146); ("off topic", 0.096); ("open", 0.276); ("too localized", 0.086) ]
-    | "not constructive" ->
-        [ ("not a real question", 0.124); ("not constructive", 0.082); ("off topic", 0.105); ("open", 0.582); ("too localized", 0.108) ]
-    | "off topic" ->
-        [ ("not a real question", 0.103); ("not constructive", 0.237); ("off topic", 0.483); ("open", 0.158); ("too localized", 0.02) ]
-    | "open" ->
-        [ ("not a real question", 0.0091347705760047); ("not constructive", 0.0046458596397953); ("off topic", 0.00520096554605094); ("open", 0.979191390785063); ("too localized", 0.00182701345308509) ]
-    | "too localized" ->
-        [ ("not a real question", 0.162); ("not constructive", 0.042); ("off topic", 0.098); ("open", 0.363); ("too localized", 0.336) ]
-    | _ -> failwith "Unrecognized category"
+benchmark model validateSet
 
-//let trainSample trainSet =
-//    let tokens = topByClass trainSet 500
-//    let training = train setOfWords trainSet tokens
-//    classify training
-//    //todo: return probabilities here
+
+//// retrieve OpenStatus and given column
+//let getQuestionsData setFileName col =
+//    parseCsv setFileName
+//    |> Seq.skip 1
+//    |> Seq.map (fun line -> line.[14], line.[col])
+//    |> Seq.toList
 //
+//// split data into train and test sets
+//let splitSets fileName trainPct col =
+//    let questionsData = getQuestionsData fileName col
+//    let sampleSize = size trainPct questionsData.Length
+//    questionsData
+//    |> Seq.fold (fun (i, (sample, test)) q -> 
+//        if i <= sampleSize then i+1, (q::sample, test)
+//        else i+1, (sample, q::test)) (1,([],[]))
+//    |> snd
 //
-//// Visualize classification results by group
-//let visualizeByGroup test testSet =
-//    testSet
-//    |> Seq.map (fun (c, t) -> 
-//        let result = test t |> Seq.maxBy snd |> fst
-//        c, result)
-//    |> Seq.groupBy fst
-//    |> Seq.map (fun (cl, gr) ->
-//        let grouped = gr |> Seq.groupBy snd
-//        cl,
-//        grouped |> Seq.map (fun (res, cases) -> res, Seq.length cases))
-//    |> Seq.iter (fun (cl, results) -> 
-//        printfn ""
-//        printfn "Real: %s" cl
-//        results |> Seq.iter (fun (g, c) -> printfn "%s, %i" g c))
-
-// Evaluate % correctly classified
-
-//questionTitles
-//|> Seq.skip (sampleSize + 1)
-//|> Seq.take 1000
-//|> Seq.map (fun (c, t) -> 
-//    let result = 
-//        test t |> Seq.maxBy snd |> fst
-//    c, if result = c then 1.0 else 0.0)
-//|> Seq.groupBy fst
-//|> Seq.map (fun (cl, gr) -> cl, gr |> Seq.averageBy snd)
-//|> Seq.iter (fun (cl, prob) -> printfn "%s %f" cl prob)
-
-// http://www.textfixer.com/resources/common-english-words.txt
-let stopWords = "a,able,about,across,after,all,almost,also,am,among,an,and,any,are,as,at,be,because,been,but,by,can,cannot,could,dear,did,do,does,either,else,ever,every,for,from,get,got,had,has,have,he,her,hers,him,his,how,however,i,if,in,into,is,it,its,just,least,let,like,likely,may,me,might,most,must,my,neither,no,nor,not,of,off,often,on,only,or,other,our,own,rather,said,say,says,she,should,since,so,some,than,that,the,their,them,then,there,these,they,this,tis,to,too,twas,us,wants,was,we,were,what,when,where,which,while,who,whom,why,will,with,would,yet,you,your"
-let remove = stopWords.Split(',') |> Set.ofArray
-
-//let words = 
-//        dataset
-//        |> extractWords
-//        |> Set.filter (fun w -> remove.Contains(w) |> not)
-
-printfn "Reading data sets"
-let trainSet, testSet = splitSets trainSampleSet trainPct bodyCol
-
-printfn "Training model on training set"
-
-let test =
-    let tokens = topByClass trainSet 500
-    train setOfWords trainSet tokens
-let classifier = classify test
-
-let model = fun (text:string) -> (classifier text |> renormalize)
-let priorModel = fun (text:string) -> priors
-let trainPriorModel = fun (text:string) -> trainingPriors
-let uniformModel = fun (text:string) -> uniform
-
-let awfulModel = fun (text:string) ->
-        Map.empty
-           .Add("not a real question", 0.01)
-           .Add("not constructive",    0.01)
-           .Add("off topic",           0.01)
-           .Add("open",                0.01)
-           .Add ("too localized",      0.96)
-
-printfn "Saving"
-saveWordsFrequencies @"..\..\..\bayes.csv" test
-
-//printfn "Testing model on test set"
-let inline predict model = Seq.map model 
-let predictions = 
-    predict model (Seq.map snd testSet) 
-    |> Seq.map (fun e -> Map.toSeq e)
-
-//printfn "Analyze"
-//visualizeByGroup model testSet
-quality predictions (Seq.map fst testSet)
-
-// printfn "Reading"
-// let back = readWordsFrequencies @"..\..\..\bayes.csv";;
-// let model = updatePriors back priors
+//// need to do some work on this to produce probabilities
+//// based on Bayes classifier output. This is raw, based on
+//// observed error using classifier
+//let bodyClassifier category =
+//    match category with
+//    | "not a real question" ->
+//        [ ("not a real question", 0.397); ("not constructive", 0.146); ("off topic", 0.096); ("open", 0.276); ("too localized", 0.086) ]
+//    | "not constructive" ->
+//        [ ("not a real question", 0.124); ("not constructive", 0.082); ("off topic", 0.105); ("open", 0.582); ("too localized", 0.108) ]
+//    | "off topic" ->
+//        [ ("not a real question", 0.103); ("not constructive", 0.237); ("off topic", 0.483); ("open", 0.158); ("too localized", 0.02) ]
+//    | "open" ->
+//        [ ("not a real question", 0.0091347705760047); ("not constructive", 0.0046458596397953); ("off topic", 0.00520096554605094); ("open", 0.979191390785063); ("too localized", 0.00182701345308509) ]
+//    | "too localized" ->
+//        [ ("not a real question", 0.162); ("not constructive", 0.042); ("off topic", 0.098); ("open", 0.363); ("too localized", 0.336) ]
+//    | _ -> failwith "Unrecognized category"

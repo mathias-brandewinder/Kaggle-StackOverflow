@@ -101,10 +101,13 @@ module Data =
 
         File.AppendAllLines(filePath, convertToText)
             
+    // indices of the title and body columns
+    let titleCol, bodyCol = 6, 7
+
     let extractPost (line: string []) =
         { Id    = line.[0];
-          Title = line.[6];
-          Body  = line.[7] }
+          Title = line.[titleCol];
+          Body  = line.[bodyCol] }
 
     let prepareResults (data: string [] seq)
                        (model: Post -> Map<string, float>) 
