@@ -140,12 +140,13 @@ let predictions =
 //printfn "Analyze"
 //visualizeByGroup model testSet
 quality predictions (Seq.map fst testSet)
-// Question 46 of sample set classifies as NaN??? See below
 
-//printfn "Reading"
-//let back = readWordsFrequencies @"C:\Users\Mathias\model\bayes.csv";;
+// printfn "Reading"
+// let back = readWordsFrequencies @"..\..\..\bayes.csv";;
+// let model = updatePriors back priors
 
 /// following block is a question which fails to classify
+// Question 46 of sample set classifies as NaN??? See below
 
 // "I have created one application which record the sound and also play that sound.
 //While i m using it from Windows xp is works fine. But while i am using Windows 7 for the Same code then it gives me error.
