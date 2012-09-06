@@ -44,24 +44,13 @@ let model = fun (post: Charon.Post) -> (classifier post.Body |> renormalize)
 
 benchmark model validateSet
 
+//// Create submission file
+//let leader = updatePriors modelData priors
+//let leaderClassifier = classify leader
+//let leaderboardModel = fun (post: Charon.Post) -> (leaderClassifier post.Body |> renormalize)
+//create publicLeaderboard @"..\..\..\submission00.csv" leaderboardModel categories
 
-//// retrieve OpenStatus and given column
-//let getQuestionsData setFileName col =
-//    parseCsv setFileName
-//    |> Seq.skip 1
-//    |> Seq.map (fun line -> line.[14], line.[col])
-//    |> Seq.toList
-//
-//// split data into train and test sets
-//let splitSets fileName trainPct col =
-//    let questionsData = getQuestionsData fileName col
-//    let sampleSize = size trainPct questionsData.Length
-//    questionsData
-//    |> Seq.fold (fun (i, (sample, test)) q -> 
-//        if i <= sampleSize then i+1, (q::sample, test)
-//        else i+1, (sample, q::test)) (1,([],[]))
-//    |> snd
-//
+
 //// need to do some work on this to produce probabilities
 //// based on Bayes classifier output. This is raw, based on
 //// observed error using classifier
