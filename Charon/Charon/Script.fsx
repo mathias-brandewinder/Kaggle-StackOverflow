@@ -1,4 +1,5 @@
 ﻿#r "Microsoft.VisualBasic"
+
 #load "Data.fs"
 #load "Preprocessing.fs"
 #load "Distributions.fs"
@@ -172,3 +173,13 @@ let comboStatModel = fun (post: Charon.Post) ->
                   0.05, priorModel post ]
 
 benchmark comboStatModel validateSet
+
+
+let createSVMInput model (dataset: #seq<Charon.Post * _>) fileName =
+    let lines = dataset |> Seq.map (fun (p, s) -> 
+        String.Join(",", [| probsToString (model p); string p.Reputation; string p.Undeleted; s |]))
+    System.IO.File.WriteAllLines(fileName, lines)
+
+
+createSVMInput comboModel trainSet @"..\..\..\comboModelTrain.csv"
+createSVMInput comboModel validateSet @"..\..\..\comboModelValidate.csv"
