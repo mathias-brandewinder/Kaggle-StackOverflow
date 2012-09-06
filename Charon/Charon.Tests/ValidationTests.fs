@@ -39,6 +39,3 @@ type ``Validation Tests`` () =
             [1, 0.0; 2, 1.0]
             [1, 0.2; 2, 0.8] ]
         (quality predicted real) |> should equal infinity
-
-open Charon.Data
-
