@@ -141,12 +141,13 @@ module NaiveBayes =
 
     // Convert Naive Bayes to Distribution over categories
     // based on each category likelihood
-    let renormalize result =
+    let renormalize (result: ('a * float) seq) =
+        let min = result |> Seq.minBy snd |> snd
         let exponential =
             result
-            |> Seq.map (fun (cat, value) -> (cat, exp value))
+            |> Seq.map (fun (cat, value) -> (cat, exp (value - min)))
         let total = 
-            exponential |> Seq.sumBy snd
+            exponential |> Seq.sumBy snd       
         exponential
         |> Seq.map (fun (key, value) -> (key, value / total))
         |> Map.ofSeq
