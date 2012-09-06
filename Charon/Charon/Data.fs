@@ -41,6 +41,12 @@ module Data =
            .Add("open",                0.979191390785063)
            .Add ("too localized",      0.00182701345308509)
 
+   // Basic function to reduce questions to open vs. close
+    let simplified group =
+        match group with
+        | "open" -> "open"
+        | _      -> "closed"
+
     let readWordsFrequencies (filePath: string) =
         let data = parseCsv filePath |> Seq.toList
         categories 
