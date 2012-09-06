@@ -32,7 +32,7 @@ module Data =
         "open";
         "too localized" ]
 
-    // Prior probability of each category
+    // Prior probability of each category, in overall sample
     let priors =
         Map.empty
            .Add("not a real question", 0.0091347705760047)
@@ -40,6 +40,33 @@ module Data =
            .Add("off topic",           0.00520096554605094)
            .Add("open",                0.979191390785063)
            .Add ("too localized",      0.00182701345308509)
+
+    // Prior probability of each category, in training sample
+    let trainingPriors =
+        Map.empty
+           .Add("not a real question", 0.22)
+           .Add("not constructive",    0.11)
+           .Add("off topic",           0.13)
+           .Add("open",                0.50)
+           .Add ("too localized",      0.04)
+
+    // Uniform distribution over categories, for testing/benchmarking
+    let uniformPriors =
+        Map.empty
+           .Add("not a real question", 0.2)
+           .Add("not constructive",    0.2)
+           .Add("off topic",           0.2)
+           .Add("open",                0.2)
+           .Add ("too localized",      0.2)
+
+    // Name says it all - for testing/benchmarking
+    let awfulPriors =
+        Map.empty
+           .Add("not a real question", 0.01)
+           .Add("not constructive",    0.01)
+           .Add("off topic",           0.01)
+           .Add("open",                0.01)
+           .Add ("too localized",      0.96)
 
    // Basic function to reduce questions to open vs. close
     let simplified group =
