@@ -7,6 +7,34 @@ module Preprocessing =
 
     let options = RegexOptions.Compiled ||| RegexOptions.IgnoreCase
 
+    // Regular Expression matching full words, case insensitive.
+    let matchWords = new Regex(@"\w+", options)
+
+    // Extract and count words from a string.
+    // http://stackoverflow.com/a/2159085/114519        
+    let wordsCount (text: string) =
+        matchWords.Matches((text.ToLower()))
+        |> Seq.cast<Match>
+        |> Seq.groupBy (fun m -> m.Value)
+        |> Seq.map (fun (value, groups) -> 
+            value.ToLower(), (groups |> Seq.length))
+        |> Map.ofSeq
+
+    // Extracts all words used in a string.
+    let vocabulary (text: string) =
+        matchWords.Matches((text.ToLower()))
+        |> Seq.cast<Match>
+        |> Seq.map (fun m -> m.Value)
+        |> Set.ofSeq
+
+    // Extracts all words used in a dataset;
+    // a Dataset is a sequence of "samples", 
+    // each sample has a label (the class), and text.
+    let extractWords (dataset: string seq) =
+        dataset
+        |> Seq.map (fun text -> vocabulary text)
+        |> Set.unionMany 
+
     let codeRegex = Regex("((^|\\n)\s{4}\s*((?!\\n).)*)+|`[^`]+`", options)
     let httpAddrRegex = Regex("(http|https)://[^\s]*", options)
 
