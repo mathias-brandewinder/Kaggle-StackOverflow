@@ -37,7 +37,7 @@
     <None Include="packages.config" />
     <Compile Include="DataTests.fs" />
     <Compile Include="PreprocessingTests.fs" />
-    <Compile Include="TestsDistributions.fs" />
+    <Compile Include="DistributionsTests.fs" />
     <Compile Include="ValidationTests.fs" />
     <Compile Include="NaiveBayesTests.fs" />
   </ItemGroup>

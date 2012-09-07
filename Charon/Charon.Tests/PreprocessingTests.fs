@@ -25,3 +25,9 @@ type ``Preprocessing Tests`` ()=
         let text = "    let sum a b = a + b\nBegins with code"
         let expected = "\nBegins with code"
         removeCode text |> should equal expected
+
+    [<Test>]
+    member test.``filterStopWords should remove stop words from set`` ()=
+        let original = [ "Aardvark"; "about"; "ACROSS"; ] |> Set.ofList
+        let expected = [ "Aardvark" ] |> Set.ofList
+        filterStopWords original |> should equal expected
