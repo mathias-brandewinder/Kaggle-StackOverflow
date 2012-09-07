@@ -3,6 +3,7 @@
 module NaiveBayes =
 
     open System
+    open System.Text
     open System.Text.RegularExpressions
     open Charon.Distributions
 
@@ -11,29 +12,28 @@ module NaiveBayes =
 
     // Extract and count words from a string.
     // http://stackoverflow.com/a/2159085/114519        
-    let wordsCount text =
-        matchWords.Matches(text)
+    let wordsCount (text: string) =
+        matchWords.Matches((text.ToLower()))
         |> Seq.cast<Match>
-        |> Seq.groupBy (fun m -> m.Value.ToLower())
+        |> Seq.groupBy (fun m -> m.Value)
         |> Seq.map (fun (value, groups) -> 
             value.ToLower(), (groups |> Seq.length))
         |> Map.ofSeq
 
     // Extracts all words used in a string.
-    let vocabulary text =
-        matchWords.Matches(text)
+    let vocabulary (text: string) =
+        matchWords.Matches((text.ToLower()))
         |> Seq.cast<Match>
-        |> Seq.map (fun m -> m.Value.ToLower())
+        |> Seq.map (fun m -> m.Value)
         |> Set.ofSeq
-        
+
     // Extracts all words used in a dataset;
     // a Dataset is a sequence of "samples", 
     // each sample has a label (the class), and text.
-    let extractWords (dataset: (string * string) seq) =
-        dataset 
-        |> Seq.map (fun sample -> vocabulary (snd sample))
-        |> Seq.concat
-        |> Set.ofSeq
+    let extractWords (dataset: string seq) =
+        dataset
+        |> Seq.map (fun text -> vocabulary text)
+        |> Set.unionMany 
 
     // "Tokenize" the dataset: break each text sample
     // into words and how many times they are used.
@@ -77,7 +77,7 @@ module NaiveBayes =
         |> Seq.fold (fun state (label, sample) -> folder state sample) init
 
     let topWords dataset =
-        let words = extractWords dataset
+        let words = dataset |> Seq.map snd |> extractWords
         let init = 
             words 
             |> Seq.map (fun w -> (w, 0))

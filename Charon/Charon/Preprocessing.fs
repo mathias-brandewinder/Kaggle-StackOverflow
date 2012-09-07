@@ -3,9 +3,7 @@
 module Preprocessing =
 
     open System
-    open System.IO
     open System.Text.RegularExpressions
-    open Microsoft.VisualBasic.FileIO    
 
     let options = RegexOptions.Compiled ||| RegexOptions.IgnoreCase
 
