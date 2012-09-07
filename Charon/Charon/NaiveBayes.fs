@@ -67,6 +67,22 @@ module NaiveBayes =
         |> Seq.concat
         |> Set.ofSeq
 
+    let filteredTopWords dataset =
+        let words = 
+            dataset 
+            |> Seq.map snd 
+            |> extractWords
+            |> filterStopWords
+        let init = 
+            words 
+            |> Seq.map (fun w -> (w, 0))
+            |> Map.ofSeq
+        dataset
+        |> prepare
+        |> Seq.fold (fun state (label, sample) -> bagFold state sample) init
+        |> Seq.filter (fun kv -> (kv.Value) > 2 )
+        |> Seq.map (fun kv -> kv.Key)
+    
     // Convenience functions for training the classifier
     // using set-of-Words and bag-of-Words frequency.
     let bagOfWords dataset words = frequency bagFold dataset words

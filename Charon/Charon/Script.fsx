@@ -1,11 +1,13 @@
 ﻿#r "Microsoft.VisualBasic"
 #load "Data.fs"
+#load "Preprocessing.fs"
 #load "Distributions.fs"
 #load "Validation.fs"
 #load "NaiveBayes.fs"
 System.IO.Directory.SetCurrentDirectory(__SOURCE_DIRECTORY__)
 
 open Charon.Data
+open Charon.Preprocessing
 open Charon.Distributions
 open Charon.Validation
 open MachineLearning.NaiveBayes
