@@ -1,9 +1,21 @@
 ﻿namespace Charon
 
+open System
+
 type Post = 
     { Id: string; 
+      PostDate: DateTime;
+      UserDate: DateTime;
+      Reputation: int;
+      Undeleted: int;
       Title: string; 
-      Body: string }
+      Body: string;
+      Tag1: string;
+      Tag2: string;
+      Tag3: string;
+      Tag4: string;
+      Tag5: string;
+      CloseDate: Option<DateTime> }
 
 module Data =
 
@@ -103,11 +115,28 @@ module Data =
             
     // indices of the title and body columns
     let titleCol, bodyCol = 6, 7
+    let tag1Col, tag2Col, tag3Col, tag4Col, tag5Col = 8, 9, 10, 11, 12
+
+    let someDate text =
+        let succ, date = DateTime.TryParse(text)
+        match succ with
+        | true  -> Some(date)
+        | false -> None
 
     let extractPost (line: string []) =
-        { Id    = line.[0];
-          Title = line.[titleCol];
-          Body  = line.[bodyCol] }
+        { Id          = line.[0];
+          PostDate    = Convert.ToDateTime(line.[1]);
+          UserDate    = Convert.ToDateTime(line.[3]);
+          Reputation  = Convert.ToInt32(line.[4]);
+          Undeleted   = Convert.ToInt32(line.[5]);
+          Title       = line.[titleCol];
+          Body        = line.[bodyCol];
+          Tag1        = line.[tag1Col];
+          Tag2        = line.[tag2Col];
+          Tag3        = line.[tag3Col];
+          Tag4        = line.[tag4Col];
+          Tag5        = line.[tag5Col];
+          CloseDate   = someDate(line.[13]) }
 
     let prepareResults (data: string [] seq)
                        (model: Post -> Map<string, float>) 
