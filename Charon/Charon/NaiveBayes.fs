@@ -67,6 +67,18 @@ module NaiveBayes =
         |> Seq.concat
         |> Set.ofSeq
 
+    let topByClassNoCodeNoStopWords dataset top =
+        dataset
+        |> Seq.groupBy fst
+        |> Seq.map (fun (cl, group) -> 
+            group 
+            |> Seq.map (fun (c, txt) -> c, preprocess txt)
+            |> topWords 
+            |> Seq.take top 
+            |> Set.ofSeq 
+            |> filterStopWords)
+        |> Set.unionMany
+        
     let filteredTopWords dataset =
         let words = 
             dataset 
