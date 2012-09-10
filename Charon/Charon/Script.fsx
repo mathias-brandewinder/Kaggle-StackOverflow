@@ -41,12 +41,21 @@ let sample =
     
 let trainSet, validateSet = split sample trainPct
     
-let modelData = readWordsFrequencies @"..\..\..\bayes.csv"
+let modelData = readWordsFrequencies @"..\..\..\bayes-body-filtered.csv"
 let training = updatePriors modelData trainingPriors
 let classifier = classify training 
 let model = fun (post: Charon.Post) -> (classifier post.Body |> renormalize)
 
 benchmark model validateSet
+
+for w in 0.0 .. 0.1 .. 1.0 do
+   let m = fun (post: Charon.Post) -> combine categories (w, (classifier post.Body |> renormalize)) (1.0-w, trainingPriors)
+   benchmark m validateSet
+ 
+//for w in 0.0 .. 0.1 .. 1.0 do
+//   let m = fun (post: Charon.Post) -> combine categories (w, (classifier post.Body |> renormalize)) (1.0-w, (titleClassifier post.Title |> renormalize))
+//   benchmark m validateSet
+
 
 // experimenting: benchmarking linear combinations of prior + model
 // manual search for best weight
