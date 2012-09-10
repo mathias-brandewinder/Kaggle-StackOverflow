@@ -18,3 +18,11 @@ module Distributions =
         categories
         |> List.fold (fun (comb: Map<string, float>) cat ->
             comb.Add(cat, w1 * d1.[cat] + w2 * d2.[cat])) Map.empty
+
+    // Create a linear combination of a sequence of weighted maps
+    let combineMany (categories: string list) 
+                    (weightedDist: (float * Map<string, float>) seq) =
+        categories
+        |> List.fold (fun (comb: Map<string, float>) cat ->
+            let value = weightedDist |> Seq.sumBy (fun (w, m) -> w * m.[cat])
+            comb.Add(cat, value)) Map.empty

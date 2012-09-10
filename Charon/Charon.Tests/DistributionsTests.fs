@@ -38,3 +38,26 @@ type ``Distributions Tests`` ()=
 
         let actual = combine categories (0.25, alpha) (0.75, bravo)
         actual |> should equal expected
+
+    [<Test>]              
+    member test.``CombineMany should produce linear combination`` ()=
+        let alpha = Map.empty
+                       .Add("A", 10.0)
+                       .Add("B", 20.0)
+                          
+        let bravo = Map.empty
+                       .Add("A", 30.0)
+                       .Add("B", 40.0)
+
+        let charlie = Map.empty
+                       .Add("A", 50.0)
+                       .Add("B", 60.0)
+
+        let categories = [ "A"; "B" ]
+
+        let expected = Map.empty
+                          .Add("A", 35.0)
+                          .Add("B", 45.0)                         
+
+        let actual = combineMany categories [ (0.25, alpha); (0.25, bravo); (0.5, charlie) ]
+        actual |> should equal expected
