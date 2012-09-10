@@ -14,8 +14,7 @@ type Post =
       Tag2: string;
       Tag3: string;
       Tag4: string;
-      Tag5: string;
-      CloseDate: Option<DateTime> }
+      Tag5: string; }
 
 module Data =
 
@@ -26,16 +25,10 @@ module Data =
 
     let parseCsv (filePath: string) =
 
-        let reader = new TextFieldParser(filePath)
+        use reader = new TextFieldParser(filePath)
         reader.TextFieldType <- FieldType.Delimited
         reader.SetDelimiters(",")
-
-        Seq.unfold (fun line ->
-            if reader.EndOfData 
-            then 
-                reader.Close()
-                None
-            else Some(line, reader.ReadFields())) (reader.ReadFields())
+        [ while (not reader.EndOfData) do yield reader.ReadFields() ]
 
     let categories = [
         "not a real question";
@@ -135,8 +128,7 @@ module Data =
           Tag2        = line.[tag2Col];
           Tag3        = line.[tag3Col];
           Tag4        = line.[tag4Col];
-          Tag5        = line.[tag5Col];
-          CloseDate   = someDate(line.[13]) }
+          Tag5        = line.[tag5Col]; }
 
     let prepareResults (data: string [] seq)
                        (model: Post -> Map<string, float>) 
@@ -154,6 +146,6 @@ module Data =
                (model: Post -> Map<string, float>) 
                categories =
 
-        let data = parseCsv sourceFile
+        let data = parseCsv sourceFile |> List.tail
         let contents = prepareResults data model categories
         File.WriteAllLines(resultFile, contents)

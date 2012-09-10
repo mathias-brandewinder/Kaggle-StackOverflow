@@ -11,7 +11,7 @@ type ``Data Tests`` () =
 
     [<Test>] 
     member test.``Validate Post extraction from data line.`` ()=
-        let data = [| "1"; "2/2/2012"; ""; "1/1/2011"; "2"; "3"; "Title"; "Body";"Tag1"; "Tag2"; "Tag3"; "Tag4"; "Tag5"; "3/3/2013" |]
+        let data = [| "1"; "2/2/2012"; ""; "1/1/2011"; "2"; "3"; "Title"; "Body";"Tag1"; "Tag2"; "Tag3"; "Tag4"; "Tag5" |]
         let post = extractPost data
         post.Id |> should equal "1"
         post.PostDate |> should equal (new DateTime(2012, 2, 2))
@@ -25,7 +25,6 @@ type ``Data Tests`` () =
         post.Tag3 |> should equal "Tag3"
         post.Tag4 |> should equal "Tag4"
         post.Tag5 |> should equal "Tag5"
-        post.CloseDate |> should equal (Some(new DateTime(2013, 3, 3)))
 
     [<Test>] 
     member test.``Validate preparation of submission data.`` ()=
