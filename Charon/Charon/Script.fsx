@@ -41,55 +41,57 @@ let sample =
     
 let trainSet, validateSet = split sample trainPct
     
-let modelData = readWordsFrequencies @"..\..\..\bayes-body-filtered.csv"
-let training = updatePriors modelData trainingPriors
-let classifier = classify training 
-let model = fun (post: Charon.Post) -> (classifier post.Body |> renormalize)
+// build Bayes on Body
+printfn "Building Bayes classifier on Post body"
+let bodyData = readWordsFrequencies @"..\..\..\bayes-body-filtered.csv"
+let bodyTraining = updatePriors bodyData trainingPriors
+let bodyClassifier = classify bodyTraining 
+let bodyModel = fun (post: Charon.Post) -> (bodyClassifier post.Body |> renormalize)
 
-benchmark model validateSet
+// build Bayes on Title
+printfn "Building Bayes classifier on Post title"
+let titleData = readWordsFrequencies @"..\..\..\title-bayes.csv"
+let titleTraining = updatePriors titleData trainingPriors
+let titleClassifier = classify titleTraining 
+let titleModel = fun (post: Charon.Post) -> (titleClassifier post.Title |> renormalize)
 
-for w in 0.0 .. 0.1 .. 1.0 do
-   let m = fun (post: Charon.Post) -> combine categories (w, (classifier post.Body |> renormalize)) (1.0-w, trainingPriors)
-   benchmark m validateSet
- 
-//for w in 0.0 .. 0.1 .. 1.0 do
-//   let m = fun (post: Charon.Post) -> combine categories (w, (classifier post.Body |> renormalize)) (1.0-w, (titleClassifier post.Title |> renormalize))
-//   benchmark m validateSet
+let priorModel = fun (post: Charon.Post) -> trainingPriors
 
+// search for good weights between models
+// typically working on small dataset first to get a sense of right params 
+let testSet = validateSet |> Seq.take 100
+for bodyW in 0.275 .. 0.025 .. 0.325 do
+    let m = max 0.7 (min 0.7 (1.0 - bodyW))
+    for titleW in 0.6 .. 0.025 .. m do
+        printfn "Combination: Body %f, Title %f" bodyW titleW
+        let restW = 1.0 - bodyW - titleW
+        let mixModel = fun (post: Charon.Post) ->
+            combineMany categories [ (bodyW, bodyModel post); (titleW, titleModel post); (restW, priorModel post) ]
+        benchmark mixModel testSet
 
-// experimenting: benchmarking linear combinations of prior + model
-// manual search for best weight
-let w = 0.5 
-let m = fun (post: Charon.Post) -> combine categories (w, (classifier post.Body |> renormalize)) (1.0-w, trainingPriors)
-benchmark m validateSet
+// current best model: 30% bayes body, 60% bayes title, 10% raw priors
+let comboModel = fun (post: Charon.Post) -> combineMany categories [ (0.3, bodyModel post); (0.6, titleModel post); (0.1, priorModel post) ]
 
 //// Create submission file
-// on my dinky laptop, takes < 5 minutes
-let leader = updatePriors modelData priors
-let leaderClassifier = classify leader
-// Submission 0: raw model
-//let leaderboardModel = fun (post: Charon.Post) -> (leaderClassifier post.Body |> renormalize)
-//create publicLeaderboard @"..\..\..\submission00.csv" leaderboardModel categories
-// Submission 1: 50% model, 50% priors
-let weight = 0.5
-let leaderboardModel = fun (post: Charon.Post) -> 
-    combine categories (weight, (leaderClassifier post.Body |> renormalize)) (1.0-weight, priors)
-create publicLeaderboard @"..\..\..\submission01.csv" leaderboardModel categories
 
+//// build Bayes on Body
+//printfn "Building Bayes classifier on Post body"
+//let bodyData = readWordsFrequencies @"..\..\..\bayes-body-filtered.csv"
+//let bodyTraining = updatePriors bodyData priors
+//let bodyClassifier = classify bodyTraining 
+//let bodyModel = fun (post: Charon.Post) -> (bodyClassifier post.Body |> renormalize)
+//
+//// build Bayes on Title
+//printfn "Building Bayes classifier on Post title"
+//let titleData = readWordsFrequencies @"..\..\..\title-bayes.csv"
+//let titleTraining = updatePriors titleData priors
+//let titleClassifier = classify titleTraining 
+//let titleModel = fun (post: Charon.Post) -> (titleClassifier post.Title |> renormalize)
+//
+//let priorModel = fun (post: Charon.Post) -> priors
+//
+//let comboModel = fun (post: Charon.Post) -> combineMany categories [ (0.3, bodyModel post); (0.6, titleModel post); (0.1, priorModel post) ]
+//
+//let submissionFile = "TYPE FILE NAME HERE" //@"..\..\..\submission00.csv"
+//create publicLeaderboard submissionFile comboModel categories
 
-//// need to do some work on this to produce probabilities
-//// based on Bayes classifier output. This is raw, based on
-//// observed error using classifier
-//let bodyClassifier category =
-//    match category with
-//    | "not a real question" ->
-//        [ ("not a real question", 0.397); ("not constructive", 0.146); ("off topic", 0.096); ("open", 0.276); ("too localized", 0.086) ]
-//    | "not constructive" ->
-//        [ ("not a real question", 0.124); ("not constructive", 0.082); ("off topic", 0.105); ("open", 0.582); ("too localized", 0.108) ]
-//    | "off topic" ->
-//        [ ("not a real question", 0.103); ("not constructive", 0.237); ("off topic", 0.483); ("open", 0.158); ("too localized", 0.02) ]
-//    | "open" ->
-//        [ ("not a real question", 0.0091347705760047); ("not constructive", 0.0046458596397953); ("off topic", 0.00520096554605094); ("open", 0.979191390785063); ("too localized", 0.00182701345308509) ]
-//    | "too localized" ->
-//        [ ("not a real question", 0.162); ("not constructive", 0.042); ("off topic", 0.098); ("open", 0.363); ("too localized", 0.336) ]
-//    | _ -> failwith "Unrecognized category"
