@@ -46,7 +46,6 @@
     <Compile Include="Validation.fs" />
     <Compile Include="NaiveBayes.fs" />
     <None Include="Script.fsx" />
-    <None Include="bayes.csv" />
     <None Include="BayesBodyModel.fsx" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
