@@ -35,17 +35,19 @@ module LogisticRegression =
                label =
         add weights (scalar obs (alpha * (error weights obs label)))
 
-    let train (data: (float list) seq) 
-              (labels: float seq)
-              passes
-              alpha =
-        let dataset =
+    let prepare (data: (float list) seq) 
+                (labels: float seq) =
             data
             |> Seq.map (fun e -> 1.0 :: e)
             |> Seq.zip labels
             |> Seq.toArray
+
+    let train (dataset: (float * float list) seq) 
+              passes
+              alpha =
+        let dataset = dataset |> Seq.toArray
         let l = Array.length dataset
-        let vars = data |> Seq.nth 1 |> List.length |> (+) 1
+        let vars = dataset |> Seq.nth 1 |> snd |> List.length
         let iterations = passes * l
         let weights = [ for i in 1 .. vars -> 1.0 ]
         let rng = new Random()
