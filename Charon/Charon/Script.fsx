@@ -40,7 +40,7 @@ let sample =
     |> Seq.toList
     
 let trainSet, validateSet = split sample trainPct
-    
+
 // build Bayes on Body
 printfn "Building Bayes classifier on Post body"
 let bodyData = readWordsFrequencies @"..\..\..\bayes-body-filtered.csv"
@@ -57,6 +57,7 @@ let titleModel = fun (post: Charon.Post) -> (titleClassifier post.Title |> renor
 
 let priorModel = fun (post: Charon.Post) -> trainingPriors
 
+   
 // search for good weights between models
 // typically working on small dataset first to get a sense of right params 
 let testSet = validateSet |> Seq.take 100

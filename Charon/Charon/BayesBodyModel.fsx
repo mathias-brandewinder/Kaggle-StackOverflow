@@ -6,6 +6,7 @@
 #load "NaiveBayes.fs"
 System.IO.Directory.SetCurrentDirectory(__SOURCE_DIRECTORY__)
 
+open System
 open Charon.Data
 open Charon.Preprocessing
 open Charon.Distributions
@@ -46,6 +47,7 @@ let splitSets fileName trainPct col =
         else i+1, (sample, q::test)) (1,([],[]))
     |> snd
 
+
 // Model estimation
 
 printfn "Reading data sets"
@@ -60,6 +62,30 @@ let knowledge =
 let classifier = classify knowledge
 
 let model = fun (text:string) -> (classifier text |> renormalize)
+
+// Tags Model estimation
+
+let tagTokens = 
+    trainSet 
+    |> Seq.fold (fun (tokens: Set<string>) (post, _) -> 
+        tokens.Add(post.Tag1).Add(post.Tag2).Add(post.Tag3).Add(post.Tag4).Add(post.Tag5)) Set.empty
+    |> Set.remove ""
+
+let tagsAsText (post: Charon.Post) =
+    let tags =
+        [ post.Tag1; post.Tag2; post.Tag3; post.Tag4; post.Tag5 ]
+        |> List.filter (fun tag -> not (tag = ""))
+    String.Join(" ", tags)
+
+let tagSample = 
+    trainSet
+    |> Seq.map (fun (post, cl) -> (cl, tagsAsText post))
+
+let tagKnowledge = train setOfWords tagSample tagTokens
+let tagClassifier = classify tagKnowledge 
+let tagModel = fun (post: Charon.Post) -> (tagClassifier (tagsAsText post) |> renormalize)
+
+// saveWordsFrequencies @"..\..\..\bayes-tags.csv" tagKnowledge
 
 // Model persistence
 
