@@ -45,6 +45,7 @@
     <Compile Include="Distributions.fs" />
     <Compile Include="Validation.fs" />
     <Compile Include="NaiveBayes.fs" />
+    <Compile Include="LogisticRegression.fs" />
     <None Include="Script.fsx" />
     <None Include="BayesBodyModel.fsx" />
   </ItemGroup>
