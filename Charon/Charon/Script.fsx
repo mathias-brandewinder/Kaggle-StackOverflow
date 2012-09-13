@@ -6,6 +6,8 @@
 #load "NaiveBayes.fs"
 System.IO.Directory.SetCurrentDirectory(__SOURCE_DIRECTORY__)
 
+open System
+open System.Text
 open Charon.Data
 open Charon.Preprocessing
 open Charon.Distributions
@@ -55,23 +57,42 @@ let titleTraining = updatePriors titleData trainingPriors
 let titleClassifier = classify titleTraining 
 let titleModel = fun (post: Charon.Post) -> (titleClassifier post.Title |> renormalize)
 
+// build Bayes on Tags
+printfn "Building Bayes classifier on Post tags"
+let tagsAsText (post: Charon.Post) = String.Join(" ", post.Tags)
+let tagsData = readWordsFrequencies @"..\..\..\bayes-tags.csv"
+let tagsTraining = updatePriors tagsData trainingPriors
+let tagsClassifier = classify tagsTraining 
+let tagsModel = fun (post: Charon.Post) -> (tagsClassifier (tagsAsText post) |> renormalize)
+
 let priorModel = fun (post: Charon.Post) -> trainingPriors
 
    
 // search for good weights between models
 // typically working on small dataset first to get a sense of right params 
 let testSet = validateSet |> Seq.take 100
-for bodyW in 0.275 .. 0.025 .. 0.325 do
-    let m = max 0.7 (min 0.7 (1.0 - bodyW))
-    for titleW in 0.6 .. 0.025 .. m do
-        printfn "Combination: Body %f, Title %f" bodyW titleW
-        let restW = 1.0 - bodyW - titleW
-        let mixModel = fun (post: Charon.Post) ->
-            combineMany categories [ (bodyW, bodyModel post); (titleW, titleModel post); (restW, priorModel post) ]
-        benchmark mixModel testSet
+for bodyW in 0.1 .. 0.05 .. 0.5 do
+//    let m = max 0.7 (min 0.7 (1.0 - bodyW))
+    for titleW in 0.4 .. 0.05 .. 1.0 - bodyW do
+        for tagsW in 0.0 .. 0.05 .. 1.0 - bodyW - titleW do
+            printfn "Combination: Body %f, Title %f, Tags %f" bodyW titleW tagsW
+            let restW = 1.0 - bodyW - titleW - tagsW
+            let mixModel = fun (post: Charon.Post) ->
+                combineMany categories 
+                            [ (bodyW, bodyModel post); 
+                              (titleW, titleModel post); 
+                              (tagsW, tagsModel post);
+                              (restW, priorModel post) ]
+            benchmark mixModel testSet
 
 // current best model: 30% bayes body, 60% bayes title, 10% raw priors
 let comboModel = fun (post: Charon.Post) -> combineMany categories [ (0.3, bodyModel post); (0.6, titleModel post); (0.1, priorModel post) ]
+let comboModel2 = fun (post: Charon.Post) -> 
+    combineMany categories 
+                [ (0.20, bodyModel post); 
+                  (0.50, titleModel post); 
+                  (0.25, tagsModel post); 
+                  (0.05, priorModel post) ]
 
 //// Create submission file
 
@@ -89,10 +110,23 @@ let comboModel = fun (post: Charon.Post) -> combineMany categories [ (0.3, bodyM
 //let titleClassifier = classify titleTraining 
 //let titleModel = fun (post: Charon.Post) -> (titleClassifier post.Title |> renormalize)
 //
+//// build Bayes on Tags
+//printfn "Building Bayes classifier on Post tags"
+//let tagsAsText (post: Charon.Post) = String.Join(" ", post.Tags)
+//let tagsData = readWordsFrequencies @"..\..\..\bayes-tags.csv"
+//let tagsTraining = updatePriors tagsData priors
+//let tagsClassifier = classify tagsTraining 
+//let tagsModel = fun (post: Charon.Post) -> (tagsClassifier (tagsAsText post) |> renormalize)
+//
 //let priorModel = fun (post: Charon.Post) -> priors
 //
 //let comboModel = fun (post: Charon.Post) -> combineMany categories [ (0.3, bodyModel post); (0.6, titleModel post); (0.1, priorModel post) ]
+//let comboModel2 = fun (post: Charon.Post) -> 
+//    combineMany categories 
+//                [ (0.20, bodyModel post); 
+//                  (0.50, titleModel post); 
+//                  (0.25, tagsModel post); 
+//                  (0.05, priorModel post) ]
 //
-//let submissionFile = "TYPE FILE NAME HERE" //@"..\..\..\submission00.csv"
-//create publicLeaderboard submissionFile comboModel categories
-
+//let submissionFile = @"..\..\..\submission06.csv"
+//create publicLeaderboard submissionFile comboModel2 categories
