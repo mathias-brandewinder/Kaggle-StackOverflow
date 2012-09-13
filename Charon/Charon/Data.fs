@@ -15,6 +15,9 @@ type Post =
       Tag3: string;
       Tag4: string;
       Tag5: string; }
+    member this.Tags = 
+        [ this.Tag1; this.Tag2; this.Tag3; this.Tag4; this.Tag5 ]
+        |> List.filter (fun t -> not (String.IsNullOrWhiteSpace(t)))
 
 module Data =
 
@@ -36,6 +39,25 @@ module Data =
         "off topic";
         "open";
         "too localized" ]
+
+    type Category = NotReal | NotConstructive | OffTopic | Open | TooLocal
+
+    let categoryToString cat =
+        match cat with
+        | NotReal         -> "not a real question"
+        | NotConstructive -> "not constructive"
+        | OffTopic        -> "off topic"
+        | Open            -> "open"
+        | TooLocal        -> "too localized"
+
+    let stringToCategory text =
+        match text with 
+        | "not a real question" -> NotReal
+        | "not constructive"    -> NotConstructive
+        | "off topic"           -> OffTopic
+        | "open"                -> Open
+        | "too localized"       -> TooLocal
+        | _                     -> failwith "ooops?"
 
     // Prior probability of each category, in overall sample
     let priors =
