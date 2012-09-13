@@ -130,3 +130,14 @@ let comboModel2 = fun (post: Charon.Post) ->
 //
 //let submissionFile = @"..\..\..\submission06.csv"
 //create publicLeaderboard submissionFile comboModel2 categories
+
+let inline probsToString (m: Map<_, float>) =
+    String.Join(",", categories |> Seq.map (fun c -> string m.[c]) |> Seq.toArray)
+
+// save probabilities to a file
+let saveProbs model dataset fileName =
+    let lines = 
+        dataset
+        |> Seq.map (fst >> model >> probsToString)
+        |> Seq.append [ String.Join(",", Array.ofList categories) ]
+    System.IO.File.WriteAllLines(fileName, lines)
