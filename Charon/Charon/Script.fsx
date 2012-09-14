@@ -85,51 +85,13 @@ for bodyW in 0.1 .. 0.05 .. 0.5 do
                               (restW, priorModel post) ]
             benchmark mixModel testSet
 
-// current best model: 30% bayes body, 60% bayes title, 10% raw priors
-let comboModel = fun (post: Charon.Post) -> combineMany categories [ (0.3, bodyModel post); (0.6, titleModel post); (0.1, priorModel post) ]
-let comboModel2 = fun (post: Charon.Post) -> 
+// current best model
+let comboModel = fun (post: Charon.Post) -> 
     combineMany categories 
                 [ (0.20, bodyModel post); 
                   (0.50, titleModel post); 
                   (0.25, tagsModel post); 
                   (0.05, priorModel post) ]
-
-//// Create submission file
-
-//// build Bayes on Body
-//printfn "Building Bayes classifier on Post body"
-//let bodyData = readWordsFrequencies @"..\..\..\bayes-body-filtered.csv"
-//let bodyTraining = updatePriors bodyData priors
-//let bodyClassifier = classify bodyTraining 
-//let bodyModel = fun (post: Charon.Post) -> (bodyClassifier post.Body |> renormalize)
-//
-//// build Bayes on Title
-//printfn "Building Bayes classifier on Post title"
-//let titleData = readWordsFrequencies @"..\..\..\title-bayes.csv"
-//let titleTraining = updatePriors titleData priors
-//let titleClassifier = classify titleTraining 
-//let titleModel = fun (post: Charon.Post) -> (titleClassifier post.Title |> renormalize)
-//
-//// build Bayes on Tags
-//printfn "Building Bayes classifier on Post tags"
-//let tagsAsText (post: Charon.Post) = String.Join(" ", post.Tags)
-//let tagsData = readWordsFrequencies @"..\..\..\bayes-tags.csv"
-//let tagsTraining = updatePriors tagsData priors
-//let tagsClassifier = classify tagsTraining 
-//let tagsModel = fun (post: Charon.Post) -> (tagsClassifier (tagsAsText post) |> renormalize)
-//
-//let priorModel = fun (post: Charon.Post) -> priors
-//
-//let comboModel = fun (post: Charon.Post) -> combineMany categories [ (0.3, bodyModel post); (0.6, titleModel post); (0.1, priorModel post) ]
-//let comboModel2 = fun (post: Charon.Post) -> 
-//    combineMany categories 
-//                [ (0.20, bodyModel post); 
-//                  (0.50, titleModel post); 
-//                  (0.25, tagsModel post); 
-//                  (0.05, priorModel post) ]
-//
-//let submissionFile = @"..\..\..\submission06.csv"
-//create publicLeaderboard submissionFile comboModel2 categories
 
 let inline probsToString (m: Map<_, float>) =
     String.Join(",", categories |> Seq.map (fun c -> string m.[c]) |> Seq.toArray)
