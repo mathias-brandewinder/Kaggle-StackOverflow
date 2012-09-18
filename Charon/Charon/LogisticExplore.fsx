@@ -62,14 +62,14 @@ let numeric (data: (Charon.Post * string) list) =
     |> List.map (fun (post, cat) ->
         let label = 
             match (stringToCategory cat) with
-            | TooLocal -> 1.0
+            | Open -> 1.0
             | _       -> 0.0
-        label, 1.0 :: (numbersFrom post))
+        label, (numbersFrom post))
 
 let nTraining = numeric trainSet
 let nValidate = numeric validateSet
-let w = train nTraining 100 0.01
-let classifier = classify w
+let w = train nTraining 1 0.9
+let classifier = predict w
 
 let stats (predictions: (float * float) seq) =     
     let correct =

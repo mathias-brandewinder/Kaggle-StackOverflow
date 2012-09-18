@@ -17,53 +17,56 @@ module LogisticRegression =
         List.zip vec1 vec2
         |> List.map (fun e -> fst e + snd e)
 
-    let scalar (vec: float list) alpha =
-        List.map (fun e -> alpha * e) vec
-
+    let scalar alpha (vector: float list) =
+        List.map (fun e -> alpha * e) vector
+    
+    // Weights have 1 element more than observations, for constant
     let predict (weights: float list) 
                 (obs: float list) =
-        dot weights obs |> sigmoid
+        1.0 :: obs
+        |> dot weights 
+        |> sigmoid
 
     let error (weights: float list)
               (obs: float list)
               label =
         label - predict weights obs
 
+    let norm (vector: float list) = List.sumBy (fun e -> e * e) vector |> sqrt
+
+    let changeRate before after =
+        let numerator = 
+            List.zip before after
+            |> List.map (fun (b, a) -> b - a)
+            |> norm
+        let denominator = norm before
+        numerator / denominator
+
     let update alpha 
                (weights: float list)
-               (obs: float list)
-               label =
-        add weights (scalar obs (alpha * (error weights obs label)))
-
-    let prepare (data: (float list) seq) 
-                (labels: float seq) =
-            data
-            |> Seq.map (fun e -> 1.0 :: e)
-            |> Seq.zip labels
-            |> Seq.toArray
+               (observ: float list)
+               label =      
+        add weights (scalar (alpha * (error weights observ label)) (1.0 :: observ))
 
     let train (dataset: (float * float list) seq) 
               passes
               alpha =
         let dataset = dataset |> Seq.toArray
-        let l = Array.length dataset
+        let len = Array.length dataset
+        let iterations = passes * len
         let vars = dataset |> Seq.nth 1 |> snd |> List.length
-        let iterations = passes * l
-        let weights = [ for i in 1 .. vars -> 1.0 ]
+        let weights = [ for i in 0 .. vars -> 1.0 ] // 1 more weight for constant
         let rng = new Random()
 
-        let rec descent iter curWeights =
+        let rec descent iter a curWeights =
             match iter with 
             | 0 -> curWeights
             | _ ->
-                let (lab, obs) = dataset.[rng.Next(l)] 
-                let weights = update alpha curWeights obs lab
-                descent (iter - 1) weights
+                let (label, observ) = dataset.[rng.Next(len)] 
+                let weights = update alpha curWeights observ label
+                let a = a * 0.999 + 0.001
+                printfn "%f" (changeRate curWeights weights)
+                List.iter (fun e -> printf " %f " e) weights
+                descent (iter - 1) a weights
 
-        descent iterations weights
-
-    let classify (weights: float list) 
-                 (obs: float list) =
-        1.0 :: obs
-        |> dot weights 
-        |> sigmoid
+        descent iterations alpha weights

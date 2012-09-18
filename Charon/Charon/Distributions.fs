@@ -26,3 +26,11 @@ module Distributions =
         |> List.fold (fun (comb: Map<string, float>) cat ->
             let value = weightedDist |> Seq.sumBy (fun (w, m) -> w * m.[cat])
             comb.Add(cat, value)) Map.empty
+
+    let fractile percentage (sample: 'a seq) =
+        let array =
+            sample
+            |> Seq.sort
+            |> Seq.toArray
+        let index = percentage * (float)(Array.length array) |> (int)
+        array.[index]
