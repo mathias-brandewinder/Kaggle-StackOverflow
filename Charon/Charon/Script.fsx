@@ -114,8 +114,8 @@ let undeletedModel = fun (post: Charon.Post) ->
         else undeletedKnowledge |> Map.map (fun k v -> (1.0 - v) * trainingPriors.[k])
     let total = estimates |> Map.fold (fun acc k v -> acc + v) 0.0
     estimates |> Map.map (fun k v -> v / total)
-let priorModel = fun (post: Charon.Post) -> trainingPriors
 
+let priorModel = fun (post: Charon.Post) -> trainingPriors
 
 let qstat = getQuestionsByUser trainSet
 let qstatModel = fun (post: Charon.Post) -> 
@@ -140,13 +140,15 @@ for bodyW in 0.1 .. 0.05 .. 0.5 do
                               (restW, priorModel post) ]
             benchmark mixModel testSet
 
+
 // current best model
 let comboModel = fun (post: Charon.Post) -> 
     combineMany categories 
-                [ (0.20, bodyModel post); 
-                  (0.50, titleModel post); 
+                [ (0.18, bodyModel post); 
+                  (0.51, titleModel post); 
                   (0.25, tagsModel post); 
-                  (0.05, priorModel post) ]
+                  (0.03, reputationModel post);
+                  (0.03, reputationModel post) ]
 
 let inline probsToString (m: Map<_, float>) =
     String.Join(",", categories |> Seq.map (fun c -> string m.[c]))
@@ -175,108 +177,6 @@ let saveProbs model dataset fileName =
 //        |> List.map (fun (cl, data) -> cl :: (data |> List.map (fun e -> e.ToString())))
 //        |> List.map (fun l -> String.Join(",", l))
 //    System.IO.File.WriteAllLines(@"..\..\..\meta.csv", lines)
-
-// Experimenting with tag pairs
-let tagMatch (tags: string list) (token: string * string) =
-    List.exists (fun t -> 
-        t = fst token) tags 
-        && List.exists (fun t -> t = snd token) tags
-
-let tagPairs (tags: string list) =
-    let rec extract (current: (string * string) list) (tokens: string list) =
-        match tokens with
-        | [] -> current
-        | [_] -> current
-        | hd :: tl ->
-            let combos = tl |> List.map (fun t -> (hd, t))
-            let newCurrent = List.append current combos
-            extract newCurrent tl
-    tags |> List.sort |> extract []
-
-let tagPairsCount data =
-    let update (acc: Map<(string * string), int>) (tags: string list) = 
-        tags
-        |> tagPairs
-        |> Seq.fold (fun (a: Map<(string * string), int>) t -> 
-            if a.ContainsKey(t) 
-            then a.Add(t, a.[t] + 1) 
-            else a.Add(t, 1)) acc
-    data
-    |> Seq.fold (fun acc post -> 
-        update acc post) Map.empty 
-
-let topTokenPairs data min =
-    data
-    |> tagPairsCount
-    |> Map.filter (fun k v -> v >= min)
-
-let tokenPairs (dataset: (Charon.Post * string) list) =
-    dataset
-    |> List.map (fun (post, l) -> tagPairs post.Tags)
-    |> List.concat
-    |> Set.ofList
-
-let pairsCount (data: (string * Charon.Post) seq) (words: Set<(string * string)>) =
-    data
-    |> Seq.map (fun (label, sample) -> sample.Tags)
-    |> tagPairsCount
-    |> Map.map (fun k v -> v + 1)
-
-let tokensTrain (dataset: (Charon.Post * string) list) words =
-    let size = Seq.length dataset
-    dataset
-    |> Seq.map (fun (post, label) -> label, post)
-    |> Seq.groupBy fst
-    |> Seq.map (fun (label, data) -> 
-        label, Seq.length data, pairsCount data words)
-    |> Seq.map (fun (label, total, tokenCount) ->
-        let totTokens = Map.fold (fun total key value -> total + value) 0 tokenCount
-        label, 
-        prop(total, size), 
-        Map.map (fun token count -> prop(count, totTokens)) tokenCount)
-    |> Seq.toList
-
-let tokensClassify (estimator: (string * float * Map<(string * string), float>) seq) (post: Charon.Post) =
-    let pairs = post.Tags |> tagPairs     
-    estimator
-    |> Seq.map (fun (label, proba, tokens) ->
-            label,
-            pairs
-            |> List.fold (fun p token ->
-                if tokens.ContainsKey token
-                then p + log(tokens.[token])
-                else p) (log proba))
-        |> Seq.toList
-
-let topPairsByClass (dataset: (Charon.Post * string) seq) min =
-        dataset
-        |> Seq.map (fun (post, lbl) -> lbl, post.Tags)
-        |> Seq.groupBy fst
-        |> Seq.map (fun (lbl, group) -> 
-            topTokenPairs (group |> Seq.map snd) min
-            |> Map.toSeq
-            |> Seq.map fst
-            |> Set.ofSeq)
-        |> Set.unionMany
-
-let smallTrainSet = trainSet |> Seq.take 10000 |> Seq.toList
-let tokens = topPairsByClass trainSet 3
-let knowledge = tokensTrain smallTrainSet tokens
-let tokensClassifier = tokensClassify knowledge
-let tokensModel = fun (post: Charon.Post) -> (tokensClassifier post |> renormalize)
-
-
-
-for w in 0.2 .. 0.1 .. 0.6 do
-    let testModel = fun (post: Charon.Post) -> 
-        combineMany categories 
-                    [ (w * 0.20, bodyModel post); 
-                      (w * 0.50, titleModel post); 
-                      (w * 0.25, tagsModel post);
-                      (1.0 - w, reputationModel post); 
-                      (w * 0.05, priorModel post) ]
-    printfn "%f original" w                 
-    benchmark testModel smallSet
 
 
 // combo with questions stat
