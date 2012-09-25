@@ -20,7 +20,7 @@ open Microsoft.VisualBasic.FileIO
 #time
 
 let publicLeaderboard = @"..\..\..\public_leaderboard.csv"
-let submissionFile = "REPLACE WITH FILE NAME" // @"..\..\..\submission11.csv" // 
+let submissionFile = "REPLACE WITH FILE NAME" // @"..\..\..\submission13.csv" // 
 
 // build Bayes on Body
 printfn "Building Bayes classifier on Post body"
@@ -45,7 +45,7 @@ let tagsClassifier = classify tagsTraining
 let tagsModel = fun (post: Charon.Post) -> (tagsClassifier (tagsAsText post) |> renormalize)
 
 // build reputation model - hardcoded
-let median = 42 // measured on leaderboard
+let reputationMedian = 42 // measured on leaderboard
 // P (rep <= median | class), measured on train set
 let reputationKnowledge = 
     Map.empty
@@ -57,24 +57,51 @@ let reputationKnowledge =
 
 let reputationModel = fun (post: Charon.Post) -> 
     let estimates = 
-        if post.Reputation <= median
+        if post.Reputation <= reputationMedian
         then reputationKnowledge |> Map.map (fun k v -> v * priors.[k])
         else reputationKnowledge |> Map.map (fun k v -> (1.0 - v) * priors.[k])
+    let total = estimates |> Map.fold (fun acc k v -> acc + v) 0.0
+    estimates |> Map.map (fun k v -> v / total)
+
+let undeletedMedian = 1
+let undeletedKnowledge = 
+    Map.empty
+       .Add("not a real question", 0.7629465642)
+       .Add("not constructive",    0.4466473792)
+       .Add("off topic",           0.5738078941)
+       .Add("open",                0.4760810965)
+       .Add("too localized",       0.6846120314) 
+let undeletedModel = fun (post: Charon.Post) -> 
+    let estimates = 
+        if post.Undeleted <= undeletedMedian
+        then undeletedKnowledge |> Map.map (fun k v -> v * priors.[k])
+        else undeletedKnowledge |> Map.map (fun k v -> (1.0 - v) * priors.[k])
     let total = estimates |> Map.fold (fun acc k v -> acc + v) 0.0
     estimates |> Map.map (fun k v -> v / total)
 
 let priorModel = fun (post: Charon.Post) -> priors
 
 printfn "Building model"
+
+// submission 12
+//let comboModel = fun (post: Charon.Post) -> 
+//    combineMany categories 
+//                [ (0.20, bodyModel post); 
+//                  (0.50, titleModel post); 
+//                  (0.25, tagsModel post); 
+//                  (0.01, priorModel post);
+//                  (0.02, reputationModel post);
+//                  (0.02, reputationModel post) ]
+
 let comboModel = fun (post: Charon.Post) -> 
     combineMany categories 
-                [ (0.10, bodyModel post); 
-                  (0.25, titleModel post); 
-                  (0.125, tagsModel post); 
-                  (0.025, priorModel post);
-                  (0.50, reputationModel post) ]
+                [ (0.18, bodyModel post); 
+                  (0.51, titleModel post); 
+                  (0.25, tagsModel post); 
+                  (0.03, reputationModel post);
+                  (0.03, reputationModel post) ]
 
 printfn "Creating submission file"
-create publicLeaderboard submissionFile reputationModel categories
+create publicLeaderboard submissionFile comboModel categories
 
 printfn "Done"
