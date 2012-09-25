@@ -84,57 +84,43 @@ let medianExperience =
     |> Seq.map (fun p -> p.DaysExperience)
     |> fractile 0.5
 
-let reputationKnowledge =
-    trainSet 
-    |> Seq.map (fun (post, label) -> post.Reputation, label)
+let variableKnowledge (variable: Charon.Post -> 'a) 
+                      (threshold: 'a) 
+                      (trainingset: (Charon.Post * string) seq) =
+    trainingset 
+    |> Seq.map (fun (post, label) -> variable(post), label)
     |> Seq.groupBy snd
     |> Seq.map (fun (label, data) ->
         let total = Seq.length data
-        let below = data |> Seq.filter (fun e -> fst e <= medianReputation) |> Seq.length
+        let below = data |> Seq.filter (fun e -> fst e <= threshold) |> Seq.length
         label, (float)below / (float)total)
     |> Map.ofSeq 
+
+// Generic Bayesian model, based on whether variable is <= / > than threshold
+let numericModel (post: Charon.Post)
+                 (variable: Charon.Post -> 'a)
+                 (threshold: 'a)
+                 (probaBelowThreshold: Map<string, float>) =
+    let estimates = 
+        if variable(post) <= threshold
+        then probaBelowThreshold |> Map.map (fun k v -> v * trainingPriors.[k])
+        else probaBelowThreshold |> Map.map (fun k v -> (1.0 - v) * trainingPriors.[k])
+    let total = estimates |> Map.fold (fun acc k v -> acc + v) 0.0
+    estimates |> Map.map (fun k v -> v / total)
+
+let reputationKnowledge = 
+    variableKnowledge (fun post -> post.Reputation) medianReputation trainSet 
 let undeletedKnowledge =
-    trainSet 
-    |> Seq.map (fun (post, label) -> post.Undeleted, label)
-    |> Seq.groupBy snd
-    |> Seq.map (fun (label, data) ->
-        let total = Seq.length data
-        let below = data |> Seq.filter (fun e -> fst e <= medianUndeleted) |> Seq.length
-        label, (float)below / (float)total)
-    |> Map.ofSeq 
+    variableKnowledge (fun post -> post.Undeleted) medianUndeleted trainSet 
 let experienceKnowledge =
-    trainSet 
-    |> Seq.map (fun (post, label) -> post.DaysExperience, label)
-    |> Seq.groupBy snd
-    |> Seq.map (fun (label, data) ->
-        let total = Seq.length data
-        let below = data |> Seq.filter (fun e -> fst e <= medianExperience) |> Seq.length
-        label, (float)below / (float)total)
-    |> Map.ofSeq
+    variableKnowledge (fun post -> post.DaysExperience) medianExperience trainSet 
 
-let reputationModel = fun (post: Charon.Post) -> 
-    let estimates = 
-        if post.Reputation <= medianReputation
-        then reputationKnowledge |> Map.map (fun k v -> v * trainingPriors.[k])
-        else reputationKnowledge |> Map.map (fun k v -> (1.0 - v) * trainingPriors.[k])
-    let total = estimates |> Map.fold (fun acc k v -> acc + v) 0.0
-    estimates |> Map.map (fun k v -> v / total)
-
-let undeletedModel = fun (post: Charon.Post) -> 
-    let estimates = 
-        if post.Undeleted <= medianUndeleted
-        then undeletedKnowledge |> Map.map (fun k v -> v * trainingPriors.[k])
-        else undeletedKnowledge |> Map.map (fun k v -> (1.0 - v) * trainingPriors.[k])
-    let total = estimates |> Map.fold (fun acc k v -> acc + v) 0.0
-    estimates |> Map.map (fun k v -> v / total)
-
-let experienceModel = fun (post: Charon.Post) -> 
-    let estimates = 
-        if post.DaysExperience <= medianExperience
-        then experienceKnowledge |> Map.map (fun k v -> v * trainingPriors.[k])
-        else experienceKnowledge |> Map.map (fun k v -> (1.0 - v) * trainingPriors.[k])
-    let total = estimates |> Map.fold (fun acc k v -> acc + v) 0.0
-    estimates |> Map.map (fun k v -> v / total)
+let reputationModel (post: Charon.Post) = 
+    numericModel post (fun post -> post.Reputation) medianReputation reputationKnowledge
+let undeletedModel (post: Charon.Post) =
+    numericModel post (fun post -> post.Undeleted) medianUndeleted undeletedKnowledge
+let experienceModel (post: Charon.Post) = 
+    numericModel post (fun post -> post.DaysExperience) medianExperience experienceKnowledge
 
 let priorModel = fun (post: Charon.Post) -> trainingPriors
 
