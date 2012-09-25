@@ -4,6 +4,7 @@
 #load "Distributions.fs"
 #load "Validation.fs"
 #load "NaiveBayes.fs"
+#load "NumericBayes.fs"
 System.IO.Directory.SetCurrentDirectory(__SOURCE_DIRECTORY__)
 
 open System
@@ -14,7 +15,7 @@ open Charon.Distributions
 open Charon.Validation
 open MachineLearning.NaiveBayes
 open Microsoft.VisualBasic.FileIO
-
+open Charon.NumericBayes
 #time
 
 let trainSampleSet = @"..\..\..\train-sample.csv"
@@ -71,58 +72,20 @@ let leaderboardData =
     |> Seq.skip 1
     |> Seq.map extractPost 
 
-let medianReputation =
-    leaderboardData 
-    |> Seq.map (fun p -> p.Reputation)
-    |> fractile 0.5
-let medianUndeleted =
-    leaderboardData 
-    |> Seq.map (fun p -> p.Undeleted)
-    |> fractile 0.5
-let medianExperience =
-    leaderboardData 
-    |> Seq.map (fun p -> p.DaysExperience)
-    |> fractile 0.5
 
-let variableKnowledge (variable: Charon.Post -> 'a) 
-                      (threshold: 'a) 
-                      (trainingset: (Charon.Post * string) seq) =
-    trainingset 
-    |> Seq.map (fun (post, label) -> variable(post), label)
-    |> Seq.groupBy snd
-    |> Seq.map (fun (label, data) ->
-        let total = Seq.length data
-        let below = data |> Seq.filter (fun e -> fst e <= threshold) |> Seq.length
-        label, (float)below / (float)total)
-    |> Map.ofSeq 
-
-// Generic Bayesian model, based on whether variable is <= / > than threshold
-let numericModel (post: Charon.Post)
-                 (variable: Charon.Post -> 'a)
-                 (threshold: 'a)
-                 (probaBelowThreshold: Map<string, float>) =
-    let estimates = 
-        if variable(post) <= threshold
-        then probaBelowThreshold |> Map.map (fun k v -> v * trainingPriors.[k])
-        else probaBelowThreshold |> Map.map (fun k v -> (1.0 - v) * trainingPriors.[k])
-    let total = estimates |> Map.fold (fun acc k v -> acc + v) 0.0
-    estimates |> Map.map (fun k v -> v / total)
-
-let reputationKnowledge = 
-    variableKnowledge (fun post -> post.Reputation) medianReputation trainSet 
-let undeletedKnowledge =
-    variableKnowledge (fun post -> post.Undeleted) medianUndeleted trainSet 
-let experienceKnowledge =
-    variableKnowledge (fun post -> post.DaysExperience) medianExperience trainSet 
+let reputationKnowledge = variableKnowledge (fun post -> post.Reputation) 20 trainSet 
+let undeletedKnowledge = variableKnowledge (fun post -> post.Undeleted) 0 trainSet 
+let experienceKnowledge = variableKnowledge (fun post -> post.DaysExperience) 40 trainSet 
 
 let reputationModel (post: Charon.Post) = 
-    numericModel post (fun post -> post.Reputation) medianReputation reputationKnowledge
+    numericModel post (fun post -> post.Reputation) 20 reputationKnowledge trainingPriors
 let undeletedModel (post: Charon.Post) =
-    numericModel post (fun post -> post.Undeleted) medianUndeleted undeletedKnowledge
+    numericModel post (fun post -> post.Undeleted) 0 undeletedKnowledge trainingPriors
 let experienceModel (post: Charon.Post) = 
-    numericModel post (fun post -> post.DaysExperience) medianExperience experienceKnowledge
+    numericModel post (fun post -> post.DaysExperience) 40 experienceKnowledge trainingPriors
 
 let priorModel = fun (post: Charon.Post) -> trainingPriors
+
 
 let qstat = getQuestionsByUser trainSet
 let qstatModel = fun (post: Charon.Post) -> 
@@ -147,6 +110,15 @@ for bodyW in 0.1 .. 0.05 .. 0.5 do
                               (restW, priorModel post) ]
             benchmark mixModel testSet
 
+// Find best params for numeric bayes models
+// best rep: 20
+// best undeleted: 0
+// best exp: 40
+for r in 35 .. 1 .. 45 do
+    let k = variableKnowledge (fun post -> post.DaysExperience) r trainSet 
+    let model (post: Charon.Post) = numericModel post (fun post -> post.DaysExperience) r k trainingPriors
+    printfn "Threshold: %i" r
+    benchmark model validateSet
 
 // current best model
 let comboModel = fun (post: Charon.Post) -> 
