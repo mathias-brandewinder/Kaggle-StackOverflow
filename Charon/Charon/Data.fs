@@ -19,6 +19,8 @@ type Post =
     member this.Tags = 
         [ this.Tag1; this.Tag2; this.Tag3; this.Tag4; this.Tag5 ]
         |> List.filter (fun t -> not (String.IsNullOrWhiteSpace(t)))
+    member this.DaysExperience =
+        (this.PostDate - this.UserDate).Days
 
 module Data =
 

@@ -79,6 +79,10 @@ let medianUndeleted =
     leaderboardData 
     |> Seq.map (fun p -> p.Undeleted)
     |> fractile 0.5
+let medianExperience =
+    leaderboardData 
+    |> Seq.map (fun p -> p.DaysExperience)
+    |> fractile 0.5
 
 let reputationKnowledge =
     trainSet 
@@ -98,6 +102,15 @@ let undeletedKnowledge =
         let below = data |> Seq.filter (fun e -> fst e <= medianUndeleted) |> Seq.length
         label, (float)below / (float)total)
     |> Map.ofSeq 
+let experienceKnowledge =
+    trainSet 
+    |> Seq.map (fun (post, label) -> post.DaysExperience, label)
+    |> Seq.groupBy snd
+    |> Seq.map (fun (label, data) ->
+        let total = Seq.length data
+        let below = data |> Seq.filter (fun e -> fst e <= medianExperience) |> Seq.length
+        label, (float)below / (float)total)
+    |> Map.ofSeq
 
 let reputationModel = fun (post: Charon.Post) -> 
     let estimates = 
@@ -112,6 +125,14 @@ let undeletedModel = fun (post: Charon.Post) ->
         if post.Undeleted <= medianUndeleted
         then undeletedKnowledge |> Map.map (fun k v -> v * trainingPriors.[k])
         else undeletedKnowledge |> Map.map (fun k v -> (1.0 - v) * trainingPriors.[k])
+    let total = estimates |> Map.fold (fun acc k v -> acc + v) 0.0
+    estimates |> Map.map (fun k v -> v / total)
+
+let experienceModel = fun (post: Charon.Post) -> 
+    let estimates = 
+        if post.DaysExperience <= medianExperience
+        then experienceKnowledge |> Map.map (fun k v -> v * trainingPriors.[k])
+        else experienceKnowledge |> Map.map (fun k v -> (1.0 - v) * trainingPriors.[k])
     let total = estimates |> Map.fold (fun acc k v -> acc + v) 0.0
     estimates |> Map.map (fun k v -> v / total)
 
