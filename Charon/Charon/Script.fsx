@@ -72,10 +72,10 @@ let leaderboardData =
     |> Seq.skip 1
     |> Seq.map extractPost 
 
-
 let reputationKnowledge = variableKnowledge (fun post -> post.Reputation) 20 trainSet 
 let undeletedKnowledge = variableKnowledge (fun post -> post.Undeleted) 0 trainSet 
 let experienceKnowledge = variableKnowledge (fun post -> post.DaysExperience) 40 trainSet 
+let bodylengthKnowledge = variableKnowledge (fun post -> post.Body.Length) 450 trainSet
 
 let reputationModel (post: Charon.Post) = 
     numericModel post (fun post -> post.Reputation) 20 reputationKnowledge trainingPriors
@@ -83,6 +83,9 @@ let undeletedModel (post: Charon.Post) =
     numericModel post (fun post -> post.Undeleted) 0 undeletedKnowledge trainingPriors
 let experienceModel (post: Charon.Post) = 
     numericModel post (fun post -> post.DaysExperience) 40 experienceKnowledge trainingPriors
+let bodylengthModel (post: Charon.Post) = 
+    numericModel post (fun post -> post.Body.Length) 450 bodylengthKnowledge trainingPriors
+
 
 let priorModel = fun (post: Charon.Post) -> trainingPriors
 
@@ -114,9 +117,10 @@ for bodyW in 0.1 .. 0.05 .. 0.5 do
 // best rep: 20
 // best undeleted: 0
 // best exp: 40
-for r in 35 .. 1 .. 45 do
-    let k = variableKnowledge (fun post -> post.DaysExperience) r trainSet 
-    let model (post: Charon.Post) = numericModel post (fun post -> post.DaysExperience) r k trainingPriors
+// best body length: 360
+for r in 1 .. 1 .. 5 do
+    let k = variableKnowledge (fun post -> List.length post.Tags) r trainSet 
+    let model (post: Charon.Post) = numericModel post (fun post -> List.length post.Tags) r k trainingPriors
     printfn "Threshold: %i" r
     benchmark model validateSet
 

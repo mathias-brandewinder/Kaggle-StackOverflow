@@ -102,3 +102,10 @@ module Validation =
             cl, 
             data |> Seq.map (fun (p, c) -> evaluate p c) |> Seq.average)
         |> Seq.iter (fun (cl, qu) -> printfn "%s: %f" cl qu)
+
+    let worst (dataset: (Charon.Post * string) seq) (model: Charon.Post -> Map<string, float>) n =
+        dataset
+        |> Seq.map (fun (post, cat) -> (model post), cat)
+        |> Seq.map (fun (predict, cat) -> evaluate predict cat)
+        |> Seq.sort
+        |> Seq.take n
