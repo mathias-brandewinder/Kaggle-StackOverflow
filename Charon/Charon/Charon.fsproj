@@ -45,14 +45,17 @@
     <Compile Include="Distributions.fs" />
     <Compile Include="Validation.fs" />
     <Compile Include="NaiveBayes.fs" />
-    <Compile Include="LogisticRegression.fs" />
     <Compile Include="NumericBayes.fs" />
+    <Compile Include="DecisionTrees.fs" />
+    <Compile Include="LogisticRegression.fs" />
     <None Include="Script.fsx" />
     <None Include="BayesBodyModel.fsx" />
     <None Include="LogisticExplore.fsx" />
     <None Include="Submission.fsx" />
     <None Include="Visualization.fsx" />
     <None Include="TagsExplore.fsx" />
+    <None Include="TooLocalizedExplore.fsx" />
+    <None Include="TreeExplore.fsx" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />

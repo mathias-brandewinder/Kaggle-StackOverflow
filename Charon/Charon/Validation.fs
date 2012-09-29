@@ -105,7 +105,22 @@ module Validation =
 
     let worst (dataset: (Charon.Post * string) seq) (model: Charon.Post -> Map<string, float>) n =
         dataset
-        |> Seq.map (fun (post, cat) -> (model post), cat)
-        |> Seq.map (fun (predict, cat) -> evaluate predict cat)
-        |> Seq.sort
+        |> Seq.map (fun (post, cat) -> cat, (model post))
+        |> Seq.sortBy (fun (cat, predict) -> - evaluate predict cat)
         |> Seq.take n
+        |> Seq.toList
+
+    let withoutWorst (dataset: (Charon.Post * string) seq) (model: Charon.Post -> Map<string, float>) n =
+        dataset
+        |> Seq.map (fun (post, cat) -> cat, (model post))
+        |> Seq.sortBy (fun (cat, predict) -> - evaluate predict cat)
+        |> Seq.skip n
+        |> Seq.averageBy (fun (cat, predict) -> evaluate predict cat)
+
+    let withoutWorst2 (dataset: (Charon.Post * string) seq) (model: Charon.Post -> Map<string, float>) n =
+        dataset
+        |> Seq.map (fun (post, cat) -> cat, (model post))
+        |> Seq.sortBy (fun (cat, predict) -> - evaluate predict cat)
+        |> Seq.toList
+        |> List.mapi (fun i (cat, predict) -> if i < n then cat, trainingPriors else (cat, predict))
+        |> List.averageBy (fun (cat, predict) -> evaluate predict cat)
