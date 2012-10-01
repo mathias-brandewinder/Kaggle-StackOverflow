@@ -1,6 +1,6 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Charon", "Charon\Charon.fsproj", "{A68DE9F7-1BF8-4C92-A750-99765456D6D7}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Charon.Console", "Charon.Console\Charon.Console.fsproj", "{6176B641-7E2E-48F8-82B6-E7C905324F66}"
