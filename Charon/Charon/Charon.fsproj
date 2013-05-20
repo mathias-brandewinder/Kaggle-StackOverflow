@@ -56,6 +56,7 @@
     <None Include="TagsExplore.fsx" />
     <None Include="TooLocalizedExplore.fsx" />
     <None Include="TreeExplore.fsx" />
+    <None Include="OptimizeBodyBayes.fsx" />
   </ItemGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>

@@ -15,6 +15,7 @@ open MachineLearning.NaiveBayes
 open Microsoft.VisualBasic.FileIO
 
 let trainSampleSet = @"..\..\..\train-sample.csv"
+let fullSampleSet = @"..\..\..\train.csv"
 
 // split the data into train and test sets as 75/25
 let trainPct = 0.75
@@ -58,6 +59,23 @@ printfn "Training model on training set"
 let knowledge =
     let tokens = topByClass trainSet 500
     train setOfWords trainSet tokens
+
+let tokensFrom dataset min folder =
+        let words = 
+            dataset 
+            |> Seq.map snd 
+            |> Seq.map preprocess
+            |> extractWords
+            |> filterStopWords
+        let init = 
+            words 
+            |> Seq.map (fun w -> (w, 0))
+            |> Map.ofSeq
+        dataset
+        |> prepare
+        |> Seq.fold (fun state (label, sample) -> folder state sample) init
+        |> Seq.filter (fun kv -> (kv.Value) >= min )
+        |> Seq.map (fun kv -> kv.Key)
 
 let classifier = classify knowledge
 
